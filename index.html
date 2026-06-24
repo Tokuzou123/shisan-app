@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>トク家 資産ダッシュボード</title>
+
+<style>
+body{
+    font-family: sans-serif;
+    max-width: 900px;
+    margin: 20px auto;
+    padding: 10px;
+}
+
+h2{
+    margin-top:30px;
+    border-bottom:1px solid #ddd;
+    padding-bottom:5px;
+}
+
+.section{
+    border:1px solid #ddd;
+    padding:15px;
+    margin:10px 0;
+    border-radius:10px;
+}
+
+input{
+    width:100%;
+    padding:8px;
+    margin-top:5px;
+}
+
+button{
+    width:100%;
+    padding:15px;
+    font-size:18px;
+    margin-top:20px;
+    cursor:pointer;
+}
+
+.result{
+    font-size:22px;
+    font-weight:bold;
+    margin-top:20px;
+    line-height:1.6;
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+<body>
+
+<h1>トク家 資産ダッシュボード</h1>
+
+<!-- トクさん -->
+<h2>トクさん（SBI）</h2>
+
+<div class="section">オルカン <input type="number" id="t_all"></div>
+<div class="section">S&P500（旧NISA） <input type="number" id="t_sp_old"></div>
+<div class="section">S&P500（新NISA） <input type="number" id="t_sp_new"></div>
+<div class="section">NASDAQ <input type="number" id="t_nasdaq"></div>
+<div class="section">ゴールド <input type="number" id="t_gold"></div>
+<div class="section">その他 <input type="number" id="t_other"></div>
+
+<!-- 奥様SBI -->
+<h2>奥様（SBI）</h2>
+
+<div class="section">オルカン <input type="number" id="w_all"></div>
+<div class="section">NASDAQ <input type="number" id="w_nasdaq"></div>
+<div class="section">日本高配当 <input type="number" id="w_div"></div>
+<div class="section">ゴールド <input type="number" id="w_gold"></div>
+<div class="section">その他 <input type="number" id="w_other"></div>
+
+<!-- 奥様楽天 -->
+<h2>奥様（楽天 NISA）</h2>
+
+<div class="section">旧つみたてNISA オルカン <input type="number" id="w_r_old"></div>
+<div class="section">新NISA オルカン <input type="number" id="w_r_new"></div>
+
+<button onclick="calc()">資産を計算</button>
+
+<div class="result" id="result">未計算</div>
+
+<h2>将来シミュレーション</h2>
+
+<div class="section">
+<b>トクさん</b><br><br>
+
+オルカン
+<input type="number" id="t_all_monthly" value="50000">
+
+NASDAQ
+<input type="number" id="t_nasdaq_monthly" value="33600">
+
+ゴールド
+<input type="number" id="t_gold_monthly" value="16380">
+
+<div id="tok_total_monthly">
+積立合計：99,980円/月
+</div>
+</div>
+
+<div class="section">
+<b>奥様</b><br><br>
+
+オルカン
+<input type="number" id="w_all_monthly" value="40000">
+
+SBIオルカン
+<input type="number" id="w_world_monthly" value="18270">
+
+NASDAQ
+<input type="number" id="w_nasdaq_monthly" value="10080">
+
+日本高配当
+<input type="number" id="w_div_monthly" value="21000">
+
+ゴールド
+<input type="number" id="w_gold_monthly" value="9240">
+
+<div id="wife_total_monthly">
+積立合計：98,590円/月
+</div>
+</div>
+
+<div class="section">
+<b>世帯積立合計</b>
+
+<div id="family_total_monthly">
+198,570円/月
+</div>
+</div>
+
+<h2>積立内訳一覧</h2>
+
+<div class="section">
+<div id="monthlyBreakdown"></div>
+</div>
+
+
+<div class="section">
+<select id="rate">
+<option value="0.04">悲観（4%）</option>
+<option value="0.07" selected>標準（7%）</option>
+<option value="0.10">楽観（10%）</option>
+</select>
+</div>
+
+<button onclick="simulate()">シミュレーション実行</button>
+
+<button onclick="saveData()">保存</button>
+<button onclick="loadData()">読込</button>
+
+<div class="result" id="simResult">未計算</div>
+
+<h2>資産推移グラフ</h2>
+
+<div class="section">
+<canvas id="growthChart"></canvas>
+</div>
+
+<h2>世帯資産配分</h2>
+
+<div class="section">
+<canvas id="assetChart"></canvas>
+
+<div id="allocationList" style="margin-top:20px;"></div>
+</div>
+
+<h2>65歳予想資産配分</h2>
+
+<div class="section">
+    <canvas id="futureChart"></canvas>
+
+    <div id="futureAllocationList" style="margin-top:20px;"></div>
+</div>
+
+<script type="module">
+
+ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js"; 
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBmrOlhDjbUuzB2Rz4ibJ5tyjOtJoyC2zs",
+  authDomain: "tok-shisan-app.firebaseapp.com",
+  projectId: "tok-shisan-app",
+  storageBucket: "tok-shisan-app.firebasestorage.app",
+  messagingSenderId: "496520082375",
+  appId: "1:496520082375:web:06fee17e16bbb75dd09fe2"
+};
+
+console.log(firebaseConfig.projectId);
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+console.log("Firebase接続成功");
+
+function v(id){
+    return Number(document.getElementById(id).value || 0);
+}
+const inputs = document.querySelectorAll("input");
+
+inputs.forEach(input => {
+
+    const savedValue = localStorage.getItem(input.id);
+
+    if(savedValue !== null){
+        input.value = savedValue;
+    }
+
+  input.addEventListener("input", () => {
+    updateMonthlyTotals();
+}); 
+
+});
+
+updateMonthlyTotals();
+
+function calc(){
+
+// トクさん
+let tok =
+v("t_all")
++ v("t_sp_old")
++ v("t_sp_new")
++ v("t_nasdaq")
++ v("t_gold")
++ v("t_other");
+
+
+// 奥様SBI
+let wife_sbi =
+v("w_all") + v("w_nasdaq") + v("w_div") + v("w_gold") + v("w_other");
+
+// 奥様楽天
+let wife_rakuten =
+v("w_r_old") + v("w_r_new");
+
+// 合計
+let total = tok + wife_sbi + wife_rakuten;
+
+// 表示
+document.getElementById("result").innerHTML =
+"■ トクさん（SBI）： " + tok.toLocaleString() + "円<br>" +
+"■ 奥様（SBI）： " + wife_sbi.toLocaleString() + "円<br>" +
+"■ 奥様（楽天NISA）： " + wife_rakuten.toLocaleString() + "円<br><br>" +
+"====================<br>" +
+"■ 世帯合計： " + total.toLocaleString() + "円";
+
+drawChart();
+
+}
+
+function futureValue(current, monthly, annualRate, years){
+
+    let value = current;
+
+    for(let i = 0; i < years * 12; i++){
+        value = value * (1 + annualRate / 12);
+        value += monthly;
+    }
+
+    return Math.round(value);
+}
+
+function updateMonthlyTotals(){
+
+    let tokMonthly =
+    v("t_all_monthly")
+    + v("t_nasdaq_monthly")
+    + v("t_gold_monthly");
+
+    let wifeMonthly =
+    v("w_all_monthly")
+    + v("w_world_monthly")
+    + v("w_nasdaq_monthly")
+    + v("w_div_monthly")
+    + v("w_gold_monthly");
+
+    let familyMonthly = tokMonthly + wifeMonthly;
+
+    document.getElementById("tok_total_monthly").innerHTML =
+    "積立合計：" + tokMonthly.toLocaleString() + "円/月";
+
+    document.getElementById("wife_total_monthly").innerHTML =
+    "積立合計：" + wifeMonthly.toLocaleString() + "円/月";
+
+    document.getElementById("family_total_monthly").innerHTML =
+    familyMonthly.toLocaleString() + "円/月";
+
+    document.getElementById("monthlyBreakdown").innerHTML =
+
+    "<b>【トクさん】</b><br>" +
+    "オルカン：" + v("t_all_monthly").toLocaleString() + "円<br>" +
+    "NASDAQ：" + v("t_nasdaq_monthly").toLocaleString() + "円<br>" +
+    "ゴールド：" + v("t_gold_monthly").toLocaleString() + "円<br>" +
+    "合計：" + tokMonthly.toLocaleString() + "円/月<br><br>" +
+
+    "<b>【奥様】</b><br>" +
+    "オルカン：" + v("w_all_monthly").toLocaleString() + "円<br>" +
+    "SBIオルカン：" + v("w_world_monthly").toLocaleString() + "円<br>" +
+    "NASDAQ：" + v("w_nasdaq_monthly").toLocaleString() + "円<br>" +
+    "日本高配当：" + v("w_div_monthly").toLocaleString() + "円<br>" +
+    "ゴールド：" + v("w_gold_monthly").toLocaleString() + "円<br>" +
+    "合計：" + wifeMonthly.toLocaleString() + "円/月<br><br>" +
+
+    "<b>【世帯合計】</b><br>" +
+    familyMonthly.toLocaleString() + "円/月";
+}
+
+let assetChart;
+
+let growthChart;
+
+let futureChart;
+
+function drawFutureChart(all, sp500, nasdaq, gold, dividend, other){
+
+    const ctx = document.getElementById("futureChart");
+
+    if(futureChart){
+        futureChart.destroy();
+    }
+
+    let total =
+    all +
+    sp500 +
+    nasdaq +
+    gold +
+    dividend +
+    other;
+
+   document.getElementById("futureAllocationList").innerHTML =
+
+"オルカン：" + (all/total*100).toFixed(1) + "%（" + Math.round(all/10000).toLocaleString() + "万円）<br>" +
+
+"S&P500：" + (sp500/total*100).toFixed(1) + "%（" + Math.round(sp500/10000).toLocaleString() + "万円）<br>" +
+
+"NASDAQ：" + (nasdaq/total*100).toFixed(1) + "%（" + Math.round(nasdaq/10000).toLocaleString() + "万円）<br>" +
+
+"ゴールド：" + (gold/total*100).toFixed(1) + "%（" + Math.round(gold/10000).toLocaleString() + "万円）<br>" +
+
+"日本高配当：" + (dividend/total*100).toFixed(1) + "%（" + Math.round(dividend/10000).toLocaleString() + "万円）<br>" +
+
+"その他：" + (other/total*100).toFixed(1) + "%（" + Math.round(other/10000).toLocaleString() + "万円）";
+
+    
+    futureChart = new Chart(ctx,{
+        type:"pie",
+        data:{
+            labels:[
+                "オルカン",
+                "S&P500",
+                "NASDAQ",
+                "ゴールド",
+                "日本高配当",
+                "その他"
+            ],
+            datasets:[{
+                data:[
+                    all,
+                    sp500,
+                    nasdaq,
+                    gold,
+                    dividend,
+                    other
+                ]
+            }]
+        }
+    });
+}
+
+function drawGrowthChart(now, age55, age60, age65){
+
+    const ctx = document.getElementById("growthChart");
+
+    if(growthChart){
+        growthChart.destroy();
+    }
+
+    growthChart = new Chart(ctx,{
+        type:"line",
+        data:{
+            labels:["現在","55歳","60歳","65歳"],
+            datasets:[{
+                label:"世帯資産",
+                data:[now, age55, age60, age65]
+            }]
+        }
+    });
+}
+
+function drawChart(){
+
+    let all =
+    v("t_all")
+    + v("w_all")
+    + v("w_r_old")
+    + v("w_r_new");
+
+    let sp500 =
+    v("t_sp_old")
+    + v("t_sp_new");
+
+    let nasdaq =
+    v("t_nasdaq")
+    + v("w_nasdaq");
+
+    let gold =
+    v("t_gold")
+    + v("w_gold");
+
+    let dividend =
+    v("w_div");
+
+    let other =
+    v("t_other")
+    + v("w_other");
+
+    let total =
+all +
+sp500 +
+nasdaq +
+gold +
+dividend +
+other;
+
+document.getElementById("allocationList").innerHTML =
+
+"オルカン：" + (all/total*100).toFixed(1) + "%（" + Math.round(all/10000).toLocaleString() + "万円）<br>" +
+
+"S&P500：" + (sp500/total*100).toFixed(1) + "%（" + Math.round(sp500/10000).toLocaleString() + "万円）<br>" +
+
+"NASDAQ：" + (nasdaq/total*100).toFixed(1) + "%（" + Math.round(nasdaq/10000).toLocaleString() + "万円）<br>" +
+
+"ゴールド：" + (gold/total*100).toFixed(1) + "%（" + Math.round(gold/10000).toLocaleString() + "万円）<br>" +
+
+"日本高配当：" + (dividend/total*100).toFixed(1) + "%（" + Math.round(dividend/10000).toLocaleString() + "万円）<br>" +
+
+"その他：" + (other/total*100).toFixed(1) + "%（" + Math.round(other/10000).toLocaleString() + "万円）";
+
+    const ctx = document.getElementById("assetChart");
+
+    if(assetChart){
+        assetChart.destroy();
+    }
+
+    assetChart = new Chart(ctx,{
+        type:"pie",
+        data:{
+            labels:[
+                "オルカン",
+                "S&P500",
+                "NASDAQ",
+                "ゴールド",
+                "日本高配当",
+                "その他"
+            ],
+            datasets:[{
+                data:[
+                    all,
+                    sp500,
+                    nasdaq,
+                    gold,
+                    dividend,
+                    other
+                ]
+            }]
+        }
+    });
+}
+
+function simulate(){
+
+    let tok =
+    v("t_all")
+    + v("t_sp_old")
+    + v("t_sp_new")
+    + v("t_nasdaq")
+    + v("t_gold")
+    + v("t_other");
+
+    let wife =
+    v("w_all")
+    + v("w_nasdaq")
+    + v("w_div")
+    + v("w_gold")
+    + v("w_other")
+    + v("w_r_old")
+    + v("w_r_new");
+
+    let tokMonthly =
+v("t_all_monthly")
++ v("t_nasdaq_monthly")
++ v("t_gold_monthly");
+
+let wifeMonthly =
+v("w_all_monthly")
++ v("w_world_monthly")
++ v("w_nasdaq_monthly")
++ v("w_div_monthly")
++ v("w_gold_monthly");
+
+    let rate = Number(document.getElementById("rate").value);
+
+    let tok55 = futureValue(tok, tokMonthly, rate, 3);
+    let tok60 = futureValue(tok, tokMonthly, rate, 8);
+    let tok65 = futureValue(tok, tokMonthly, rate, 13);
+
+    let wife55 = futureValue(wife, wifeMonthly, rate, 3);
+    let wife60 = futureValue(wife, wifeMonthly, rate, 8);
+    let wife65 = futureValue(wife, wifeMonthly, rate, 13);
+
+    let total55 = tok55 + wife55;
+    let total60 = tok60 + wife60;
+    let total65 = tok65 + wife65;
+
+    document.getElementById("simResult").innerHTML =
+
+    "<b>【トクさん】</b><br>" +
+    "55歳：" + tok55.toLocaleString() + "円<br>" +
+    "60歳：" + tok60.toLocaleString() + "円<br>" +
+    "65歳：" + tok65.toLocaleString() + "円<br><br>" +
+
+    "<b>【奥様】</b><br>" +
+    "55歳：" + wife55.toLocaleString() + "円<br>" +
+    "60歳：" + wife60.toLocaleString() + "円<br>" +
+    "65歳：" + wife65.toLocaleString() + "円<br><br>" +
+
+    "<b>【世帯合計】</b><br>" +
+    "55歳：" + total55.toLocaleString() + "円<br>" +
+    "60歳：" + total60.toLocaleString() + "円<br>" +
+    "65歳：" + total65.toLocaleString() + "円";
+
+    drawGrowthChart(
+    tok + wife,
+    total55,
+    total60,
+    total65
+);
+
+let all65 = futureValue(
+    v("t_all")
+    + v("w_all")
+    + v("w_r_old")
+    + v("w_r_new"),
+    v("t_all_monthly")
+    + v("w_all_monthly")
+    + v("w_world_monthly"),
+    rate,
+    13
+);
+
+let sp500_65 = futureValue(
+    v("t_sp_old")
+    + v("t_sp_new"),
+    0,
+    rate,
+    13
+);
+
+let nasdaq65 = futureValue(
+    v("t_nasdaq")
+    + v("w_nasdaq"),
+    v("t_nasdaq_monthly")
+    + v("w_nasdaq_monthly"),
+    rate,
+    13
+);
+
+let gold65 = futureValue(
+    v("t_gold")
+    + v("w_gold"),
+    v("t_gold_monthly")
+    + v("w_gold_monthly"),
+    rate,
+    13
+);
+
+let dividend65 = futureValue(
+    v("w_div"),
+    v("w_div_monthly"),
+    rate,
+    13
+);
+
+let other65 =
+    v("t_other")
+    + v("w_other");
+
+drawFutureChart(
+    all65,
+    sp500_65,
+    nasdaq65,
+    gold65,
+    dividend65,
+    other65
+);
+
+}
+
+window.saveData = async function(){
+
+const inputs = document.querySelectorAll("input");
+
+let count = 0;
+
+let saveObject = {};
+
+inputs.forEach(input => {
+
+    if(input.id){
+
+        localStorage.setItem(input.id, input.value);
+
+        saveObject[input.id] = input.value;
+
+        count++;
+    }
+
+});
+
+console.log(saveObject);
+
+await setDoc(
+    doc(db, "users", "tok"),
+    saveObject
+);
+
+alert(count + "件保存しました");
+
+}
+
+window.loadData = async function(){
+
+
+const docRef = doc(db, "users", "tok");
+const docSnap = await getDoc(docRef);
+
+if(docSnap.exists()){
+
+    const data = docSnap.data();
+
+    const inputs = document.querySelectorAll("input");
+
+    inputs.forEach(input => {
+
+        if(data[input.id] !== undefined){
+            input.value = data[input.id];
+        }
+
+    });
+
+    drawChart();
+    simulate();
+
+    alert("Firebaseから読込完了");
+
+}else{
+
+    alert("データがありません");
+
+}
+
+
+}
+
+
+console.log("Firebase準備OK");
+
+calc();
+simulate();
+
+</script>
+
+</body>
+</html>
