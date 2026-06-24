@@ -588,9 +588,12 @@ let dividend65 = futureValue(
     13
 );
 
-let other65 =
-    v("t_other")
-    + v("w_other");
+let other65 = futureValue(
+    v("t_other") + v("w_other"),
+    0,
+    rate,
+    13
+);
 
 drawFutureChart(
     all65,
