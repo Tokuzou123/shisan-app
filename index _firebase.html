@@ -63,6 +63,16 @@ button{
 <div class="section">S&P500（新NISA） <input type="number" id="t_sp_new"></div>
 <div class="section">NASDAQ <input type="number" id="t_nasdaq"></div>
 <div class="section">ゴールド <input type="number" id="t_gold"></div>
+
+<div class="section">BTC保有数 <input type="number" step="0.00000001" id="t_btc_amount"></div>
+
+<div class="section">BTC現在価格 <input type="number" id="t_btc_price"></div>
+
+<div class="section">
+BTC現在価値
+<input type="number" id="t_btc_value" readonly>
+</div>
+
 <div class="section">その他 <input type="number" id="t_other"></div>
 
 <!-- 奥様SBI -->
@@ -202,6 +212,17 @@ console.log("Firebase接続成功");
 function v(id){
     return Number(document.getElementById(id).value || 0);
 }
+
+function updateBTC(){
+
+    const amount = v("t_btc_amount");
+    const price = v("t_btc_price");
+
+    document.getElementById("t_btc_value").value =
+        Math.round(amount * price);
+
+}
+
 const inputs = document.querySelectorAll("input");
 
 inputs.forEach(input => {
@@ -213,14 +234,17 @@ inputs.forEach(input => {
     }
 
   input.addEventListener("input", () => {
+
     updateMonthlyTotals();
-}); 
+    updateBTC();
+
+});
 
 });
 
 updateMonthlyTotals();
 
-function calc(){
+window.calc = function(){
 
 // トクさん
 let tok =
@@ -229,7 +253,8 @@ v("t_all")
 + v("t_sp_new")
 + v("t_nasdaq")
 + v("t_gold")
-+ v("t_other");
++ v("t_other")
++ v("t_btc_value");
 
 
 // 奥様SBI
@@ -421,13 +446,29 @@ function drawChart(){
     v("t_other")
     + v("w_other");
 
+    let btc =
+    v("t_btc_value");
+
     let total =
 all +
 sp500 +
 nasdaq +
 gold +
 dividend +
-other;
+other +
+btc;
+
+let allocationData = [
+    {name:"オルカン", value:all},
+    {name:"S&P500", value:sp500},
+    {name:"NASDAQ", value:nasdaq},
+    {name:"ゴールド", value:gold},
+    {name:"日本高配当", value:dividend},
+    {name:"その他", value:other},
+    {name:"BTC", value:btc}
+];
+
+allocationData.sort((a,b)=>b.value-a.value);
 
 document.getElementById("allocationList").innerHTML =
 
@@ -443,47 +484,48 @@ document.getElementById("allocationList").innerHTML =
 
 "その他：" + (other/total*100).toFixed(1) + "%（" + Math.round(other/10000).toLocaleString() + "万円）";
 
-    const ctx = document.getElementById("assetChart");
+const ctx = document.getElementById("assetChart");
 
-    if(assetChart){
-        assetChart.destroy();
-    }
-
-    assetChart = new Chart(ctx,{
-        type:"pie",
-        data:{
-            labels:[
-                "オルカン",
-                "S&P500",
-                "NASDAQ",
-                "ゴールド",
-                "日本高配当",
-                "その他"
-            ],
-            datasets:[{
-                data:[
-                    all,
-                    sp500,
-                    nasdaq,
-                    gold,
-                    dividend,
-                    other
-                ]
-            }]
-        }
-    });
+if(assetChart){
+    assetChart.destroy();
 }
 
-function simulate(){
+assetChart = new Chart(ctx,{
+    type:"pie",
+    data:{
+        labels:[
+            "オルカン",
+            "S&P500",
+            "NASDAQ",
+            "ゴールド",
+            "日本高配当",
+            "その他"
+        ],
+        datasets:[{
+            data:[
+                all,
+                sp500,
+                nasdaq,
+                gold,
+                dividend,
+                other
+            ]
+        }]
+    }
+});
+}
 
-    let tok =
+window.simulate = function(){
+
+   let btcFixed = v("t_btc_value");
+
+   let tok =
     v("t_all")
     + v("t_sp_old")
     + v("t_sp_new")
     + v("t_nasdaq")
     + v("t_gold")
     + v("t_other");
-
     let wife =
     v("w_all")
     + v("w_nasdaq")
@@ -507,9 +549,9 @@ v("w_all_monthly")
 
     let rate = Number(document.getElementById("rate").value);
 
-    let tok55 = futureValue(tok, tokMonthly, rate, 3);
-    let tok60 = futureValue(tok, tokMonthly, rate, 8);
-    let tok65 = futureValue(tok, tokMonthly, rate, 13);
+    let tok55 = futureValue(tok, tokMonthly, rate, 3) + btcFixed;
+    let tok60 = futureValue(tok, tokMonthly, rate, 8) + btcFixed;
+    let tok65 = futureValue(tok, tokMonthly, rate, 13) + btcFixed;
 
     let wife55 = futureValue(wife, wifeMonthly, rate, 3);
     let wife60 = futureValue(wife, wifeMonthly, rate, 8);
@@ -588,9 +630,12 @@ let dividend65 = futureValue(
     13
 );
 
-let other65 =
-    v("t_other")
-    + v("w_other");
+let other65 = futureValue(
+    v("t_other") + v("w_other"),
+    0,
+    rate,
+    13
+);
 
 drawFutureChart(
     all65,
@@ -672,6 +717,7 @@ if(docSnap.exists()){
 
 console.log("Firebase準備OK");
 
+updateBTC();
 calc();
 simulate();
 
