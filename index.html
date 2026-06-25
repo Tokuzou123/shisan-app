@@ -446,13 +446,29 @@ function drawChart(){
     v("t_other")
     + v("w_other");
 
+    let btc =
+    v("t_btc_value");
+
     let total =
 all +
 sp500 +
 nasdaq +
 gold +
 dividend +
-other;
+other +
+btc;
+
+let allocationData = [
+    {name:"オルカン", value:all},
+    {name:"S&P500", value:sp500},
+    {name:"NASDAQ", value:nasdaq},
+    {name:"ゴールド", value:gold},
+    {name:"日本高配当", value:dividend},
+    {name:"その他", value:other},
+    {name:"BTC", value:btc}
+];
+
+allocationData.sort((a,b)=>b.value-a.value);
 
 document.getElementById("allocationList").innerHTML =
 
@@ -468,48 +484,48 @@ document.getElementById("allocationList").innerHTML =
 
 "その他：" + (other/total*100).toFixed(1) + "%（" + Math.round(other/10000).toLocaleString() + "万円）";
 
-    const ctx = document.getElementById("assetChart");
+const ctx = document.getElementById("assetChart");
 
-    if(assetChart){
-        assetChart.destroy();
+if(assetChart){
+    assetChart.destroy();
+}
+
+assetChart = new Chart(ctx,{
+    type:"pie",
+    data:{
+        labels:[
+            "オルカン",
+            "S&P500",
+            "NASDAQ",
+            "ゴールド",
+            "日本高配当",
+            "その他"
+        ],
+        datasets:[{
+            data:[
+                all,
+                sp500,
+                nasdaq,
+                gold,
+                dividend,
+                other
+            ]
+        }]
     }
-
-    assetChart = new Chart(ctx,{
-        type:"pie",
-        data:{
-            labels:[
-                "オルカン",
-                "S&P500",
-                "NASDAQ",
-                "ゴールド",
-                "日本高配当",
-                "その他"
-            ],
-            datasets:[{
-                data:[
-                    all,
-                    sp500,
-                    nasdaq,
-                    gold,
-                    dividend,
-                    other
-                ]
-            }]
-        }
-    });
+});
 }
 
 window.simulate = function(){
 
-    let tok =
+   let btcFixed = v("t_btc_value");
+
+   let tok =
     v("t_all")
     + v("t_sp_old")
     + v("t_sp_new")
     + v("t_nasdaq")
     + v("t_gold")
-    + v("t_other")
-    + v("t_btc_value");
-
+    + v("t_other");
     let wife =
     v("w_all")
     + v("w_nasdaq")
@@ -533,9 +549,9 @@ v("w_all_monthly")
 
     let rate = Number(document.getElementById("rate").value);
 
-    let tok55 = futureValue(tok, tokMonthly, rate, 3);
-    let tok60 = futureValue(tok, tokMonthly, rate, 8);
-    let tok65 = futureValue(tok, tokMonthly, rate, 13);
+    let tok55 = futureValue(tok, tokMonthly, rate, 3) + btcFixed;
+    let tok60 = futureValue(tok, tokMonthly, rate, 8) + btcFixed;
+    let tok65 = futureValue(tok, tokMonthly, rate, 13) + btcFixed;
 
     let wife55 = futureValue(wife, wifeMonthly, rate, 3);
     let wife60 = futureValue(wife, wifeMonthly, rate, 8);
