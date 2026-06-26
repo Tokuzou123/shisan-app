@@ -351,13 +351,13 @@ function drawFutureChart(all, sp500, nasdaq, gold, dividend, other){
         futureChart.destroy();
     }
 
-    let total =
-    all +
-    sp500 +
-    nasdaq +
-    gold +
-    dividend +
-    other;
+   let total =
+all +
+sp500 +
+nasdaq +
+gold +
+dividend +
+other ;
 
    document.getElementById("futureAllocationList").innerHTML =
 
@@ -373,31 +373,31 @@ function drawFutureChart(all, sp500, nasdaq, gold, dividend, other){
 
 "その他：" + (other/total*100).toFixed(1) + "%（" + Math.round(other/10000).toLocaleString() + "万円）";
 
-    
-    futureChart = new Chart(ctx,{
-        type:"pie",
-        data:{
-            labels:[
-                "オルカン",
-                "S&P500",
-                "NASDAQ",
-                "ゴールド",
-                "日本高配当",
-                "その他"
-            ],
-            datasets:[{
-                data:[
-                    all,
-                    sp500,
-                    nasdaq,
-                    gold,
-                    dividend,
-                    other
-                ]
-            }]
-        }
-    });
+futureChart = new Chart(ctx,{
+    type:"pie",
+    data:{
+        labels:[
+            "オルカン",
+            "S&P500",
+            "NASDAQ",
+            "ゴールド",
+            "日本高配当",
+            "その他"
+        ],
+        datasets:[{
+            data:[
+                all,
+                sp500,
+                nasdaq,
+                gold,
+                dividend,
+                other
+            ]
+        }]
+    }
+});
 }
+    
 
 function drawGrowthChart(now, age55, age60, age65){
 
@@ -445,6 +445,7 @@ function drawChart(){
     let other =
     v("t_other")
     + v("w_other");
+    
 
     let btc =
     v("t_btc_value");
@@ -482,7 +483,9 @@ document.getElementById("allocationList").innerHTML =
 
 "日本高配当：" + (dividend/total*100).toFixed(1) + "%（" + Math.round(dividend/10000).toLocaleString() + "万円）<br>" +
 
-"その他：" + (other/total*100).toFixed(1) + "%（" + Math.round(other/10000).toLocaleString() + "万円）";
+"その他：" + (other/total*100).toFixed(1) + "%（" + Math.round(other/10000).toLocaleString() + "万円）<br>" +
+
+"BTC：" + (btc/total*100).toFixed(1) + "%（" + Math.round(btc/10000).toLocaleString() + "万円）";
 
 const ctx = document.getElementById("assetChart");
 
@@ -494,22 +497,24 @@ assetChart = new Chart(ctx,{
     type:"pie",
     data:{
         labels:[
-            "オルカン",
-            "S&P500",
-            "NASDAQ",
-            "ゴールド",
-            "日本高配当",
-            "その他"
-        ],
+    "オルカン",
+    "S&P500",
+    "NASDAQ",
+    "ゴールド",
+    "日本高配当",
+    "その他",
+    "BTC"
+],
         datasets:[{
-            data:[
-                all,
-                sp500,
-                nasdaq,
-                gold,
-                dividend,
-                other
-            ]
+           data:[
+    all,
+    sp500,
+    nasdaq,
+    gold,
+    dividend,
+    other,
+    btc
+]
         }]
     }
 });
@@ -718,7 +723,7 @@ if(docSnap.exists()){
 console.log("Firebase準備OK");
 
 updateBTC();
-calc();
+drawChart();
 simulate();
 
 </script>

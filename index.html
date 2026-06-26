@@ -471,21 +471,20 @@ let allocationData = [
 
 allocationData.sort((a,b)=>b.value-a.value);
 
-document.getElementById("allocationList").innerHTML =
+let html = "";
 
-"オルカン：" + (all/total*100).toFixed(1) + "%（" + Math.round(all/10000).toLocaleString() + "万円）<br>" +
+allocationData.forEach(item => {
 
-"S&P500：" + (sp500/total*100).toFixed(1) + "%（" + Math.round(sp500/10000).toLocaleString() + "万円）<br>" +
+    html +=
+    item.name + "：" +
+    (item.value / total * 100).toFixed(1) +
+    "%（" +
+    Math.round(item.value / 10000).toLocaleString() +
+    "万円）<br>";
 
-"NASDAQ：" + (nasdaq/total*100).toFixed(1) + "%（" + Math.round(nasdaq/10000).toLocaleString() + "万円）<br>" +
+});
 
-"ゴールド：" + (gold/total*100).toFixed(1) + "%（" + Math.round(gold/10000).toLocaleString() + "万円）<br>" +
-
-"日本高配当：" + (dividend/total*100).toFixed(1) + "%（" + Math.round(dividend/10000).toLocaleString() + "万円）<br>" +
-
-"その他：" + (other/total*100).toFixed(1) + "%（" + Math.round(other/10000).toLocaleString() + "万円）<br>" +
-
-"BTC：" + (btc/total*100).toFixed(1) + "%（" + Math.round(btc/10000).toLocaleString() + "万円）";
+document.getElementById("allocationList").innerHTML = html;
 
 const ctx = document.getElementById("assetChart");
 
