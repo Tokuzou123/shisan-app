@@ -156,6 +156,11 @@ NASDAQ
 <div id="monthlyBreakdown"></div>
 </div>
 
+<div class="section">
+生年月日
+<input type="date" id="birthday">
+<div id="currentAge"></div>
+</div>
 
 <div class="section">
 <select id="rate">
@@ -351,7 +356,7 @@ let growthChart;
 
 let futureChart;
 
-function drawFutureChart(all, sp500, nasdaq, gold, dividend, other){
+function drawFutureChart(all, sp500, nasdaq, gold, dividend, other, btc){
 
     const ctx = document.getElementById("futureChart");
 
@@ -359,51 +364,44 @@ function drawFutureChart(all, sp500, nasdaq, gold, dividend, other){
         futureChart.destroy();
     }
 
-   let total =
-all +
-sp500 +
-nasdaq +
-gold +
-dividend +
-other ;
+    let total =
+        all +
+        sp500 +
+        nasdaq +
+        gold +
+        dividend +
+        other;
 
-   document.getElementById("futureAllocationList").innerHTML =
+     let futureAllocationData = [
+    {name:"オルカン", value:all},
+    {name:"S&P500", value:sp500},
+    {name:"NASDAQ", value:nasdaq},
+    {name:"BTC", value:btc},
+    {name:"ゴールド", value:gold},
+    {name:"日本高配当", value:dividend},
+    {name:"その他", value:other}
+];
 
-"オルカン：" + (all/total*100).toFixed(1) + "%（" + Math.round(all/10000).toLocaleString() + "万円）<br>" +
+    futureAllocationData.sort((a,b)=>b.value-a.value);
 
-"S&P500：" + (sp500/total*100).toFixed(1) + "%（" + Math.round(sp500/10000).toLocaleString() + "万円）<br>" +
+    document.getElementById("futureAllocationList").innerHTML =
+        futureAllocationData.map(item =>
+            item.name + "：" +
+            (item.value / total * 100).toFixed(1) +
+            "%（" +
+            Math.round(item.value / 10000).toLocaleString() +
+            "万円）"
+        ).join("<br>");
 
-"NASDAQ：" + (nasdaq/total*100).toFixed(1) + "%（" + Math.round(nasdaq/10000).toLocaleString() + "万円）<br>" +
-
-"ゴールド：" + (gold/total*100).toFixed(1) + "%（" + Math.round(gold/10000).toLocaleString() + "万円）<br>" +
-
-"日本高配当：" + (dividend/total*100).toFixed(1) + "%（" + Math.round(dividend/10000).toLocaleString() + "万円）<br>" +
-
-"その他：" + (other/total*100).toFixed(1) + "%（" + Math.round(other/10000).toLocaleString() + "万円）";
-
-futureChart = new Chart(ctx,{
-    type:"pie",
-    data:{
-        labels:[
-            "オルカン",
-            "S&P500",
-            "NASDAQ",
-            "ゴールド",
-            "日本高配当",
-            "その他"
-        ],
-        datasets:[{
-            data:[
-                all,
-                sp500,
-                nasdaq,
-                gold,
-                dividend,
-                other
-            ]
-        }]
-    }
-});
+    futureChart = new Chart(ctx,{
+        type:"pie",
+        data:{
+            labels: futureAllocationData.map(item => item.name),
+            datasets:[{
+                data: futureAllocationData.map(item => item.value)
+            }]
+        }
+    });
 }
     
 
@@ -513,19 +511,23 @@ assetChart = new Chart(ctx,{
 
 window.simulate = function(){
 
+    const yearsTo55 = window.yearsTo55;
+const yearsTo60 = window.yearsTo60;
+const yearsTo65 = window.yearsTo65;
+
    let btcFixed = v("t_btc_value");
 
    let btc55 =
 btcFixed +
-v("t_btc_monthly") * 12 * 3;
+v("t_btc_monthly") * 12 * yearsTo55;
 
 let btc60 =
 btcFixed +
-v("t_btc_monthly") * 12 * 8;
+v("t_btc_monthly") * 12 * yearsTo60;
 
 let btc65 =
 btcFixed +
-v("t_btc_monthly") * 12 * 13;
+v("t_btc_monthly") * 12 * yearsTo65;
 
    let tok =
     v("t_all")
@@ -557,13 +559,13 @@ v("w_all_monthly")
 
     let rate = Number(document.getElementById("rate").value);
 
-    let tok55 = futureValue(tok, tokMonthly, rate, 3) + btc55;
-    let tok60 = futureValue(tok, tokMonthly, rate, 8) + btc60;
-    let tok65 = futureValue(tok, tokMonthly, rate, 13) + btc65;
-    
-    let wife55 = futureValue(wife, wifeMonthly, rate, 3);
-    let wife60 = futureValue(wife, wifeMonthly, rate, 8);
-    let wife65 = futureValue(wife, wifeMonthly, rate, 13);
+    let tok55 = futureValue(tok, tokMonthly, rate, yearsTo55) + btc55;
+let tok60 = futureValue(tok, tokMonthly, rate, yearsTo60) + btc60;
+let tok65 = futureValue(tok, tokMonthly, rate, yearsTo65) + btc65;
+
+    let wife55 = futureValue(wife, wifeMonthly, rate, yearsTo55);
+let wife60 = futureValue(wife, wifeMonthly, rate, yearsTo60);
+let wife65 = futureValue(wife, wifeMonthly, rate, yearsTo65);
 
     let total55 = tok55 + wife55;
     let total60 = tok60 + wife60;
@@ -651,7 +653,8 @@ drawFutureChart(
     nasdaq65,
     gold65,
     dividend65,
-    other65
+    other65,
+    btc65
 );
 
 }
@@ -722,12 +725,70 @@ if(docSnap.exists()){
 
 }
 
+function updateAge(){
+
+    const birthday = document.getElementById("birthday").value;
+
+    if(!birthday){
+        document.getElementById("currentAge").innerHTML = "";
+        return;
+    }
+
+    const birth = new Date(birthday);
+    const today = new Date();
+
+    let years = today.getFullYear() - birth.getFullYear();
+    let months = today.getMonth() - birth.getMonth();
+
+    if(today.getDate() < birth.getDate()){
+        months--;
+    }
+
+    if(months < 0){
+        years--;
+        months += 12;
+    }
+
+    window.yearsTo55 = 55 - years - months / 12;
+    window.yearsTo60 = 60 - years - months / 12;
+    window.yearsTo65 = 65 - years - months / 12;
+
+    function calcRemaining(targetAge){
+
+
+        let target = new Date(birth);
+
+        target.setFullYear(birth.getFullYear() + targetAge);
+
+        let y = target.getFullYear() - today.getFullYear();
+        let m = target.getMonth() - today.getMonth();
+
+        if(target.getDate() < today.getDate()){
+            m--;
+        }
+
+        if(m < 0){
+            y--;
+            m += 12;
+        }
+
+        return y + "年" + m + "か月";
+    }
+
+    document.getElementById("currentAge").innerHTML =
+        "現在： " + years + "歳 " + months + "か月<br>" +
+        "55歳まで： あと " + calcRemaining(55) + "<br>" +
+        "60歳まで： あと " + calcRemaining(60) + "<br>" +
+        "65歳まで： あと " + calcRemaining(65);
+
+}
 
 console.log("Firebase準備OK");
 
 updateBTC();
 drawChart();
 simulate();
+updateAge();
 
 </script>
 
