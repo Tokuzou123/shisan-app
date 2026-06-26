@@ -108,6 +108,12 @@ NASDAQ
 ゴールド
 <input type="number" id="t_gold_monthly" value="16380">
 
+<div class="section">
+BTC
+<input type="number" id="t_btc_monthly" value="4000">
+</div>
+
+
 <div id="tok_total_monthly">
 積立合計：99,980円/月
 </div>
@@ -297,7 +303,8 @@ function updateMonthlyTotals(){
     let tokMonthly =
     v("t_all_monthly")
     + v("t_nasdaq_monthly")
-    + v("t_gold_monthly");
+    + v("t_gold_monthly")
++ v("t_btc_monthly");
 
     let wifeMonthly =
     v("w_all_monthly")
@@ -323,6 +330,7 @@ function updateMonthlyTotals(){
     "オルカン：" + v("t_all_monthly").toLocaleString() + "円<br>" +
     "NASDAQ：" + v("t_nasdaq_monthly").toLocaleString() + "円<br>" +
     "ゴールド：" + v("t_gold_monthly").toLocaleString() + "円<br>" +
+    "BTC：" + v("t_btc_monthly").toLocaleString() + "円<br>" +
     "合計：" + tokMonthly.toLocaleString() + "円/月<br><br>" +
 
     "<b>【奥様】</b><br>" +
@@ -494,34 +502,30 @@ if(assetChart){
 
 assetChart = new Chart(ctx,{
     type:"pie",
-    data:{
-        labels:[
-    "オルカン",
-    "S&P500",
-    "NASDAQ",
-    "ゴールド",
-    "日本高配当",
-    "その他",
-    "BTC"
-],
-        datasets:[{
-           data:[
-    all,
-    sp500,
-    nasdaq,
-    gold,
-    dividend,
-    other,
-    btc
-]
-        }]
-    }
+   data:{
+    labels: allocationData.map(item => item.name),
+    datasets:[{
+        data: allocationData.map(item => item.value)
+    }]
+}
 });
 }
 
 window.simulate = function(){
 
    let btcFixed = v("t_btc_value");
+
+   let btc55 =
+btcFixed +
+v("t_btc_monthly") * 12 * 3;
+
+let btc60 =
+btcFixed +
+v("t_btc_monthly") * 12 * 8;
+
+let btc65 =
+btcFixed +
+v("t_btc_monthly") * 12 * 13;
 
    let tok =
     v("t_all")
@@ -553,10 +557,10 @@ v("w_all_monthly")
 
     let rate = Number(document.getElementById("rate").value);
 
-    let tok55 = futureValue(tok, tokMonthly, rate, 3) + btcFixed;
-    let tok60 = futureValue(tok, tokMonthly, rate, 8) + btcFixed;
-    let tok65 = futureValue(tok, tokMonthly, rate, 13) + btcFixed;
-
+    let tok55 = futureValue(tok, tokMonthly, rate, 3) + btc55;
+    let tok60 = futureValue(tok, tokMonthly, rate, 8) + btc60;
+    let tok65 = futureValue(tok, tokMonthly, rate, 13) + btc65;
+    
     let wife55 = futureValue(wife, wifeMonthly, rate, 3);
     let wife60 = futureValue(wife, wifeMonthly, rate, 8);
     let wife65 = futureValue(wife, wifeMonthly, rate, 13);
