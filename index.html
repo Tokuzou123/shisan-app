@@ -551,6 +551,24 @@ function createAllocationListHtml(allocationData, total){
 
 }
 
+function createAllocationData(all, sp500, nasdaq, gold, dividend, other, btc){
+
+    const data = [
+        {name: "オルカン", value: all},
+        {name: "S&P500", value: sp500},
+        {name: "NASDAQ", value: nasdaq},
+        {name: "ゴールド", value: gold},
+        {name: "日本高配当", value: dividend},
+        {name: "その他", value: other},
+        {name: "BTC", value: btc}
+    ];
+
+    data.sort((a, b) => b.value - a.value);
+
+    return data;
+
+}
+
 function drawChart(){
 
     const all =
@@ -590,17 +608,15 @@ function drawChart(){
         other +
         btc;
 
-    const allocationData = [
-        {name: "オルカン", value: all},
-        {name: "S&P500", value: sp500},
-        {name: "NASDAQ", value: nasdaq},
-        {name: "ゴールド", value: gold},
-        {name: "日本高配当", value: dividend},
-        {name: "その他", value: other},
-        {name: "BTC", value: btc}
-    ];
-
-    allocationData.sort((a, b) => b.value - a.value);
+    const allocationData = createAllocationData(
+    all,
+    sp500,
+    nasdaq,
+    gold,
+    dividend,
+    other,
+    btc
+);
 
     const html = createAllocationListHtml(allocationData, total);
 
