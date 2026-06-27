@@ -55,6 +55,10 @@ button{
 
 <h1>トク家 資産ダッシュボード</h1>
 
+<div class="section" id="dashboard">
+未計算
+</div>
+
 <!-- トクさん -->
 <h2>トクさん（SBI）</h2>
 
@@ -93,6 +97,17 @@ BTC現在価値
 <button onclick="calc()">資産を計算</button>
 
 <div class="result" id="result">未計算</div>
+
+<h2>設定</h2>
+
+<div class="section">
+表示単位
+<select id="displayUnit">
+<option value="yen">円</option>
+<option value="man" selected>万円</option>
+<option value="oku">億円</option>
+</select>
+</div>
 
 <h2>将来シミュレーション</h2>
 
@@ -161,13 +176,15 @@ NASDAQ
 <input type="date" id="birthday">
 <div id="currentAge"></div>
 </div>
+<div class="section">
+見たい年齢
+<select id="targetAge"></select>
+</div>
 
 <div class="section">
-<select id="rate">
-<option value="0.04">悲観（4%）</option>
-<option value="0.07" selected>標準（7%）</option>
-<option value="0.10">楽観（10%）</option>
-</select>
+
+<select id="rate"></select>
+
 </div>
 
 <button onclick="simulate()">シミュレーション実行</button>
@@ -191,7 +208,7 @@ NASDAQ
 <div id="allocationList" style="margin-top:20px;"></div>
 </div>
 
-<h2>65歳予想資産配分</h2>
+<h2 id="futureChartTitle">65歳予想資産配分</h2>
 
 <div class="section">
     <canvas id="futureChart"></canvas>
@@ -222,6 +239,28 @@ console.log("Firebase接続成功");
 
 function v(id){
     return Number(document.getElementById(id).value || 0);
+}
+
+function formatMoney(value){
+
+    const unit = document.getElementById("displayUnit").value;
+
+    switch(unit){
+
+        case "yen":
+            return Math.round(value).toLocaleString() + "円";
+
+        case "man":
+            return Math.round(value / 10000).toLocaleString() + "万円";
+
+        case "oku":
+            return (value / 100000000).toFixed(2) + "億円";
+
+        default:
+            return Math.round(value).toLocaleString() + "円";
+
+    }
+
 }
 
 function updateBTC(){
@@ -279,6 +318,9 @@ v("w_r_old") + v("w_r_new");
 // 合計
 let total = tok + wife_sbi + wife_rakuten;
 
+window.currentTotal = total;
+updateDashboard();
+
 // 表示
 document.getElementById("result").innerHTML =
 "■ トクさん（SBI）： " + tok.toLocaleString() + "円<br>" +
@@ -286,6 +328,13 @@ document.getElementById("result").innerHTML =
 "■ 奥様（楽天NISA）： " + wife_rakuten.toLocaleString() + "円<br><br>" +
 "====================<br>" +
 "■ 世帯合計： " + total.toLocaleString() + "円";
+
+document.getElementById("dashboard").innerHTML =
+
+    "<h3>📊 ダッシュボード</h3>" +
+
+    "<b>💰 現在の世帯資産</b><br>" +
+    formatMoney(total);
 
 drawChart();
 
@@ -365,12 +414,13 @@ function drawFutureChart(all, sp500, nasdaq, gold, dividend, other, btc){
     }
 
     let total =
-        all +
-        sp500 +
-        nasdaq +
-        gold +
-        dividend +
-        other;
+    all +
+    sp500 +
+    nasdaq +
+    gold +
+    dividend +
+    other +
+    btc;
 
      let futureAllocationData = [
     {name:"オルカン", value:all},
@@ -385,27 +435,43 @@ function drawFutureChart(all, sp500, nasdaq, gold, dividend, other, btc){
     futureAllocationData.sort((a,b)=>b.value-a.value);
 
     document.getElementById("futureAllocationList").innerHTML =
-        futureAllocationData.map(item =>
-            item.name + "：" +
-            (item.value / total * 100).toFixed(1) +
-            "%（" +
-            Math.round(item.value / 10000).toLocaleString() +
-            "万円）"
-        ).join("<br>");
+    futureAllocationData.map(item =>
+        item.name + "：" +
+        (item.value / total * 100).toFixed(1) +
+        "%（" +
+        formatMoney(item.value) +
+        "）"
+    ).join("<br>");
 
     futureChart = new Chart(ctx,{
         type:"pie",
         data:{
             labels: futureAllocationData.map(item => item.name),
             datasets:[{
-                data: futureAllocationData.map(item => item.value)
-            }]
+    data: futureAllocationData.map(item => item.value),
+
+    backgroundColor: futureAllocationData.map(item => {
+
+        switch(item.name){
+
+            case "オルカン": return "#2ecc71";
+            case "S&P500": return "#e74c3c";
+            case "NASDAQ": return "#3498db";
+            case "BTC": return "#f39c12";
+            case "ゴールド": return "#f1c40f";
+            case "日本高配当": return "#9b59b6";
+            default: return "#95a5a6";
+
+        }
+
+    })
+
+}]
         }
     });
 }
-    
 
-function drawGrowthChart(now, age55, age60, age65){
+function drawGrowthChart(now, currentAge, targetAge, yearlyValues, principalValues){
 
     const ctx = document.getElementById("growthChart");
 
@@ -413,14 +479,49 @@ function drawGrowthChart(now, age55, age60, age65){
         growthChart.destroy();
     }
 
+    let labels = ["現在"];
+
+    for(let age = Math.ceil(currentAge + 1); age <= targetAge; age++){
+        labels.push(age + "歳");
+    }
+
     growthChart = new Chart(ctx,{
         type:"line",
         data:{
-            labels:["現在","55歳","60歳","65歳"],
-            datasets:[{
-                label:"世帯資産",
-                data:[now, age55, age60, age65]
-            }]
+            labels: labels,
+            datasets:[
+                {
+                   label:"世帯資産",
+data: yearlyValues,
+borderColor:"#2ecc71",
+backgroundColor:"#2ecc71",
+borderWidth: 4,
+tension: 0.35,
+pointRadius: 5,
+pointHoverRadius: 8
+                },
+                {
+                    label:"元金",
+data: principalValues,
+borderColor:"#3498db",
+backgroundColor:"#3498db",
+borderWidth: 4,
+tension: 0.35,
+pointRadius: 5,
+pointHoverRadius: 8
+                }
+                        ]
+        },
+        options:{
+            plugins:{
+                tooltip:{
+                    callbacks:{
+                        label:function(context){
+                            return context.dataset.label + "：" + formatMoney(context.raw);
+                        }
+                    }
+                }
+            }
         }
     });
 }
@@ -485,8 +586,8 @@ allocationData.forEach(item => {
     item.name + "：" +
     (item.value / total * 100).toFixed(1) +
     "%（" +
-    Math.round(item.value / 10000).toLocaleString() +
-    "万円）<br>";
+    formatMoney(item.value) +
+    "）<br>";
 
 });
 
@@ -503,160 +604,209 @@ assetChart = new Chart(ctx,{
    data:{
     labels: allocationData.map(item => item.name),
     datasets:[{
-        data: allocationData.map(item => item.value)
-    }]
+    data: allocationData.map(item => item.value),
+
+    backgroundColor: allocationData.map(item => {
+
+        switch(item.name){
+
+            case "オルカン": return "#2ecc71";
+            case "S&P500": return "#e74c3c";
+            case "NASDAQ": return "#3498db";
+            case "BTC": return "#f39c12";
+            case "ゴールド": return "#f1c40f";
+            case "日本高配当": return "#9b59b6";
+            default: return "#95a5a6";
+
+        }
+
+    })
+
+}]
 }
 });
 }
 
 window.simulate = function(){
 
+    updateAge();
+
     const yearsTo55 = window.yearsTo55;
-const yearsTo60 = window.yearsTo60;
-const yearsTo65 = window.yearsTo65;
-
-   let btcFixed = v("t_btc_value");
-
-   let btc55 =
-btcFixed +
-v("t_btc_monthly") * 12 * yearsTo55;
-
-let btc60 =
-btcFixed +
-v("t_btc_monthly") * 12 * yearsTo60;
-
-let btc65 =
-btcFixed +
-v("t_btc_monthly") * 12 * yearsTo65;
-
-   let tok =
-    v("t_all")
-    + v("t_sp_old")
-    + v("t_sp_new")
-    + v("t_nasdaq")
-    + v("t_gold")
-    + v("t_other");
-    let wife =
-    v("w_all")
-    + v("w_nasdaq")
-    + v("w_div")
-    + v("w_gold")
-    + v("w_other")
-    + v("w_r_old")
-    + v("w_r_new");
-
-    let tokMonthly =
-v("t_all_monthly")
-+ v("t_nasdaq_monthly")
-+ v("t_gold_monthly");
-
-let wifeMonthly =
-v("w_all_monthly")
-+ v("w_world_monthly")
-+ v("w_nasdaq_monthly")
-+ v("w_div_monthly")
-+ v("w_gold_monthly");
+    const targetAge = Number(document.getElementById("targetAge").value);
+    const currentAge = 55 - yearsTo55;
+    const targetYears = Math.max(0, targetAge - currentAge);
 
     let rate = Number(document.getElementById("rate").value);
 
-    let tok55 = futureValue(tok, tokMonthly, rate, yearsTo55) + btc55;
-let tok60 = futureValue(tok, tokMonthly, rate, yearsTo60) + btc60;
-let tok65 = futureValue(tok, tokMonthly, rate, yearsTo65) + btc65;
+    let btcFixed = v("t_btc_value");
+    let btcMonthly = v("t_btc_monthly");
 
-    let wife55 = futureValue(wife, wifeMonthly, rate, yearsTo55);
-let wife60 = futureValue(wife, wifeMonthly, rate, yearsTo60);
-let wife65 = futureValue(wife, wifeMonthly, rate, yearsTo65);
+    let btcTarget =
+        btcFixed +
+        btcMonthly * 12 * targetYears;
 
-    let total55 = tok55 + wife55;
-    let total60 = tok60 + wife60;
-    let total65 = tok65 + wife65;
+    let tok =
+        v("t_all")
+        + v("t_sp_old")
+        + v("t_sp_new")
+        + v("t_nasdaq")
+        + v("t_gold")
+        + v("t_other");
+
+    let wife =
+        v("w_all")
+        + v("w_nasdaq")
+        + v("w_div")
+        + v("w_gold")
+        + v("w_other")
+        + v("w_r_old")
+        + v("w_r_new");
+
+    let tokMonthly =
+        v("t_all_monthly")
+        + v("t_nasdaq_monthly")
+        + v("t_gold_monthly");
+
+    let wifeMonthly =
+        v("w_all_monthly")
+        + v("w_world_monthly")
+        + v("w_nasdaq_monthly")
+        + v("w_div_monthly")
+        + v("w_gold_monthly");
+
+    let tokTarget =
+        futureValue(tok, tokMonthly, rate, targetYears) + btcTarget;
+
+    let wifeTarget =
+        futureValue(wife, wifeMonthly, rate, targetYears);
+
+    let totalTarget =
+        tokTarget + wifeTarget;
+
+    let principalTarget =
+        tok
+        + wife
+        + btcFixed
+        + (tokMonthly + wifeMonthly + btcMonthly) * 12 * targetYears;
+
+    let profitTarget =
+        totalTarget - principalTarget;
+
+        window.futureTotal = totalTarget;
+window.principalTarget = principalTarget;
+window.profitTarget = profitTarget;
+window.targetAge = targetAge;
+
+updateDashboard();
+
+    document.getElementById("futureChartTitle").innerHTML =
+    targetAge + "歳時点の予想資産配分";    
 
     document.getElementById("simResult").innerHTML =
 
-    "<b>【トクさん】</b><br>" +
-    "55歳：" + tok55.toLocaleString() + "円<br>" +
-    "60歳：" + tok60.toLocaleString() + "円<br>" +
-    "65歳：" + tok65.toLocaleString() + "円<br><br>" +
+        "<b>【" + targetAge + "歳時点】</b><br><br>" +
 
-    "<b>【奥様】</b><br>" +
-    "55歳：" + wife55.toLocaleString() + "円<br>" +
-    "60歳：" + wife60.toLocaleString() + "円<br>" +
-    "65歳：" + wife65.toLocaleString() + "円<br><br>" +
+      "トクさん：" + formatMoney(tokTarget) + "<br>" +
+"奥様：" + formatMoney(wifeTarget) + "<br>" +
+"世帯合計：" + formatMoney(totalTarget) + "<br><br>" +
 
-    "<b>【世帯合計】</b><br>" +
-    "55歳：" + total55.toLocaleString() + "円<br>" +
-    "60歳：" + total60.toLocaleString() + "円<br>" +
-    "65歳：" + total65.toLocaleString() + "円";
+"<b>【元金・運用益】</b><br>" +
+"元金：" + formatMoney(principalTarget) + "<br>" +
+"運用益：" + formatMoney(profitTarget) + "<br>" +
+"運用益率：" + (profitTarget / principalTarget * 100).toFixed(1) + "%"; 
 
-    drawGrowthChart(
-    tok + wife,
-    total55,
-    total60,
-    total65
+let yearlyValues = [];
+
+let principalValues = [];
+
+yearlyValues.push(tok + wife + btcFixed);
+
+principalValues.push(tok + wife + btcFixed);
+
+for(let age = Math.ceil(currentAge + 1); age <= targetAge; age++){
+
+    let y = age - currentAge;
+
+    let btcYear =
+        btcFixed +
+        btcMonthly * 12 * y;
+
+    let tokYear =
+        futureValue(tok, tokMonthly, rate, y) + btcYear;
+
+    let wifeYear =
+        futureValue(wife, wifeMonthly, rate, y);
+
+    yearlyValues.push(tokYear + wifeYear);
+
+    let principalYear =
+    tok +
+    wife +
+    btcFixed +
+    (tokMonthly + wifeMonthly + btcMonthly) * 12 * y;
+
+principalValues.push(principalYear);
+}
+
+   drawGrowthChart(
+    tok + wife + btcFixed,
+    currentAge,
+    targetAge,
+    yearlyValues,
+    principalValues
 );
 
-let all65 = futureValue(
-    v("t_all")
-    + v("w_all")
-    + v("w_r_old")
-    + v("w_r_new"),
-    v("t_all_monthly")
-    + v("w_all_monthly")
-    + v("w_world_monthly"),
-    rate,
-    13
-);
+    let allTarget = futureValue(
+        v("t_all") + v("w_all") + v("w_r_old") + v("w_r_new"),
+        v("t_all_monthly") + v("w_all_monthly") + v("w_world_monthly"),
+        rate,
+        targetYears
+    );
 
-let sp500_65 = futureValue(
-    v("t_sp_old")
-    + v("t_sp_new"),
-    0,
-    rate,
-    13
-);
+    let sp500Target = futureValue(
+        v("t_sp_old") + v("t_sp_new"),
+        0,
+        rate,
+        targetYears
+    );
 
-let nasdaq65 = futureValue(
-    v("t_nasdaq")
-    + v("w_nasdaq"),
-    v("t_nasdaq_monthly")
-    + v("w_nasdaq_monthly"),
-    rate,
-    13
-);
+    let nasdaqTarget = futureValue(
+        v("t_nasdaq") + v("w_nasdaq"),
+        v("t_nasdaq_monthly") + v("w_nasdaq_monthly"),
+        rate,
+        targetYears
+    );
 
-let gold65 = futureValue(
-    v("t_gold")
-    + v("w_gold"),
-    v("t_gold_monthly")
-    + v("w_gold_monthly"),
-    rate,
-    13
-);
+    let goldTarget = futureValue(
+        v("t_gold") + v("w_gold"),
+        v("t_gold_monthly") + v("w_gold_monthly"),
+        rate,
+        targetYears
+    );
 
-let dividend65 = futureValue(
-    v("w_div"),
-    v("w_div_monthly"),
-    rate,
-    13
-);
+    let dividendTarget = futureValue(
+        v("w_div"),
+        v("w_div_monthly"),
+        rate,
+        targetYears
+    );
 
-let other65 = futureValue(
-    v("t_other") + v("w_other"),
-    0,
-    rate,
-    13
-);
+    let otherTarget = futureValue(
+        v("t_other") + v("w_other"),
+        0,
+        rate,
+        targetYears
+    );
 
-drawFutureChart(
-    all65,
-    sp500_65,
-    nasdaq65,
-    gold65,
-    dividend65,
-    other65,
-    btc65
-);
-
+    drawFutureChart(
+        allTarget,
+        sp500Target,
+        nasdaqTarget,
+        goldTarget,
+        dividendTarget,
+        otherTarget,
+        btcTarget
+    );
 }
 
 window.saveData = async function(){
@@ -784,8 +934,86 @@ function updateAge(){
 
 }
 
+function setupTargetAge(){
+
+    const select = document.getElementById("targetAge");
+
+    if(!select){
+        return;
+    }
+
+    select.innerHTML = "";
+
+    for(let age = 55; age <= 90; age++){
+
+        const option = document.createElement("option");
+
+        option.value = age;
+        option.textContent = age + "歳";
+
+        if(age === 65){
+            option.selected = true;
+        }
+
+        select.appendChild(option);
+
+    }
+
+}
+
+function setupRate(){
+
+    const select = document.getElementById("rate");
+
+    if(!select){
+        return;
+    }
+
+    select.innerHTML = "";
+
+    for(let rate = 0; rate <= 20; rate++){
+        const option = document.createElement("option");
+        option.value = rate / 100;
+        option.textContent = rate + "%";
+
+        if(rate === 7){
+            option.selected = true;
+        }
+
+        select.appendChild(option);
+    }
+}
+
+function updateDashboard(){
+
+    const currentTotal = window.currentTotal || 0;
+    const futureTotal = window.futureTotal || 0;
+    const principal = window.principalTarget || 0;
+    const profit = window.profitTarget || 0;
+    const targetAge = window.targetAge || "";
+
+    document.getElementById("dashboard").innerHTML =
+
+        "<h3>📊 ダッシュボード</h3>" +
+
+        "<b>💰 現在の世帯資産</b><br>" +
+        formatMoney(currentTotal) + "<br><br>" +
+
+        "<b>🚀 " + targetAge + "歳予想</b><br>" +
+        formatMoney(futureTotal) + "<br><br>" +
+
+        "<b>📈 運用益</b><br>" +
+        formatMoney(profit) + "<br><br>" +
+
+        "<b>💵 元金</b><br>" +
+        formatMoney(principal);
+
+}
+
 console.log("Firebase準備OK");
 
+setupTargetAge();
+setupRate();
 updateBTC();
 drawChart();
 updateAge();
