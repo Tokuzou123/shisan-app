@@ -413,62 +413,45 @@ function drawFutureChart(all, sp500, nasdaq, gold, dividend, other, btc){
         futureChart.destroy();
     }
 
-    let total =
-    all +
-    sp500 +
-    nasdaq +
-    gold +
-    dividend +
-    other +
-    btc;
+    const total =
+        all +
+        sp500 +
+        nasdaq +
+        gold +
+        dividend +
+        other +
+        btc;
 
-     let futureAllocationData = [
-    {name:"オルカン", value:all},
-    {name:"S&P500", value:sp500},
-    {name:"NASDAQ", value:nasdaq},
-    {name:"BTC", value:btc},
-    {name:"ゴールド", value:gold},
-    {name:"日本高配当", value:dividend},
-    {name:"その他", value:other}
-];
+    const futureAllocationData = [
+        {name: "オルカン", value: all},
+        {name: "S&P500", value: sp500},
+        {name: "NASDAQ", value: nasdaq},
+        {name: "BTC", value: btc},
+        {name: "ゴールド", value: gold},
+        {name: "日本高配当", value: dividend},
+        {name: "その他", value: other}
+    ];
 
-    futureAllocationData.sort((a,b)=>b.value-a.value);
+    futureAllocationData.sort((a, b) => b.value - a.value);
 
-    document.getElementById("futureAllocationList").innerHTML =
-    futureAllocationData.map(item =>
-        item.name + "：" +
-        (item.value / total * 100).toFixed(1) +
-        "%（" +
-        formatMoney(item.value) +
-        "）"
-    ).join("<br>");
+   document.getElementById("futureAllocationList").innerHTML =
+   
+    createAllocationListHtml(futureAllocationData, total);
 
     futureChart = new Chart(ctx,{
-        type:"pie",
-        data:{
+        type: "pie",
+        data: {
             labels: futureAllocationData.map(item => item.name),
-            datasets:[{
-    data: futureAllocationData.map(item => item.value),
+            datasets: [
+                {
+                    data: futureAllocationData.map(item => item.value),
 
-    backgroundColor: futureAllocationData.map(item => {
-
-        switch(item.name){
-
-            case "オルカン": return "#2ecc71";
-            case "S&P500": return "#e74c3c";
-            case "NASDAQ": return "#3498db";
-            case "BTC": return "#f39c12";
-            case "ゴールド": return "#f1c40f";
-            case "日本高配当": return "#9b59b6";
-            default: return "#95a5a6";
-
-        }
-
-    })
-
-}]
+                    backgroundColor: futureAllocationData.map(item => getChartColor(item.name))
+                }
+            ]
         }
     });
+
 }
 
 function drawGrowthChart(now, currentAge, targetAge, yearlyValues, principalValues){
@@ -479,44 +462,44 @@ function drawGrowthChart(now, currentAge, targetAge, yearlyValues, principalValu
         growthChart.destroy();
     }
 
-    let labels = ["現在"];
+    const labels = ["現在"];
 
     for(let age = Math.ceil(currentAge + 1); age <= targetAge; age++){
         labels.push(age + "歳");
     }
 
     growthChart = new Chart(ctx,{
-        type:"line",
-        data:{
+        type: "line",
+        data: {
             labels: labels,
-            datasets:[
+            datasets: [
                 {
-                   label:"世帯資産",
-data: yearlyValues,
-borderColor:"#2ecc71",
-backgroundColor:"#2ecc71",
-borderWidth: 4,
-tension: 0.35,
-pointRadius: 5,
-pointHoverRadius: 8
+                    label: "世帯資産",
+                    data: yearlyValues,
+                    borderColor: "#2ecc71",
+                    backgroundColor: "#2ecc71",
+                    borderWidth: 4,
+                    tension: 0.35,
+                    pointRadius: 5,
+                    pointHoverRadius: 8
                 },
                 {
-                    label:"元金",
-data: principalValues,
-borderColor:"#3498db",
-backgroundColor:"#3498db",
-borderWidth: 4,
-tension: 0.35,
-pointRadius: 5,
-pointHoverRadius: 8
+                    label: "元金",
+                    data: principalValues,
+                    borderColor: "#3498db",
+                    backgroundColor: "#3498db",
+                    borderWidth: 4,
+                    tension: 0.35,
+                    pointRadius: 5,
+                    pointHoverRadius: 8
                 }
-                        ]
+            ]
         },
-        options:{
-            plugins:{
-                tooltip:{
-                    callbacks:{
-                        label:function(context){
+        options: {
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context){
                             return context.dataset.label + "：" + formatMoney(context.raw);
                         }
                     }
@@ -524,107 +507,124 @@ pointHoverRadius: 8
             }
         }
     });
+
+}
+
+function getChartColor(name){
+
+    switch(name){
+
+        case "オルカン":
+            return "#2ecc71";
+
+        case "S&P500":
+            return "#e74c3c";
+
+        case "NASDAQ":
+            return "#3498db";
+
+        case "BTC":
+            return "#f39c12";
+
+        case "ゴールド":
+            return "#f1c40f";
+
+        case "日本高配当":
+            return "#9b59b6";
+
+        default:
+            return "#95a5a6";
+
+    }
+
+}
+
+function createAllocationListHtml(allocationData, total){
+
+    return allocationData.map(item =>
+        item.name + "：" +
+        (item.value / total * 100).toFixed(1) +
+        "%（" +
+        formatMoney(item.value) +
+        "）"
+    ).join("<br>");
+
 }
 
 function drawChart(){
 
-    let all =
-    v("t_all")
-    + v("w_all")
-    + v("w_r_old")
-    + v("w_r_new");
+    const all =
+        v("t_all") +
+        v("w_all") +
+        v("w_r_old") +
+        v("w_r_new");
 
-    let sp500 =
-    v("t_sp_old")
-    + v("t_sp_new");
+    const sp500 =
+        v("t_sp_old") +
+        v("t_sp_new");
 
-    let nasdaq =
-    v("t_nasdaq")
-    + v("w_nasdaq");
+    const nasdaq =
+        v("t_nasdaq") +
+        v("w_nasdaq");
 
-    let gold =
-    v("t_gold")
-    + v("w_gold");
+    const gold =
+        v("t_gold") +
+        v("w_gold");
 
-    let dividend =
-    v("w_div");
+    const dividend =
+        v("w_div");
 
-    let other =
-    v("t_other")
-    + v("w_other");
-    
+    const other =
+        v("t_other") +
+        v("w_other");
 
-    let btc =
-    v("t_btc_value");
+    const btc =
+        v("t_btc_value");
 
-    let total =
-all +
-sp500 +
-nasdaq +
-gold +
-dividend +
-other +
-btc;
+    const total =
+        all +
+        sp500 +
+        nasdaq +
+        gold +
+        dividend +
+        other +
+        btc;
 
-let allocationData = [
-    {name:"オルカン", value:all},
-    {name:"S&P500", value:sp500},
-    {name:"NASDAQ", value:nasdaq},
-    {name:"ゴールド", value:gold},
-    {name:"日本高配当", value:dividend},
-    {name:"その他", value:other},
-    {name:"BTC", value:btc}
-];
+    const allocationData = [
+        {name: "オルカン", value: all},
+        {name: "S&P500", value: sp500},
+        {name: "NASDAQ", value: nasdaq},
+        {name: "ゴールド", value: gold},
+        {name: "日本高配当", value: dividend},
+        {name: "その他", value: other},
+        {name: "BTC", value: btc}
+    ];
 
-allocationData.sort((a,b)=>b.value-a.value);
+    allocationData.sort((a, b) => b.value - a.value);
 
-let html = "";
+    const html = createAllocationListHtml(allocationData, total);
 
-allocationData.forEach(item => {
+    document.getElementById("allocationList").innerHTML = html;
 
-    html +=
-    item.name + "：" +
-    (item.value / total * 100).toFixed(1) +
-    "%（" +
-    formatMoney(item.value) +
-    "）<br>";
+    const ctx = document.getElementById("assetChart");
 
-});
+    if(assetChart){
+        assetChart.destroy();
+    }
 
-document.getElementById("allocationList").innerHTML = html;
-
-const ctx = document.getElementById("assetChart");
-
-if(assetChart){
-    assetChart.destroy();
-}
-
-assetChart = new Chart(ctx,{
-    type:"pie",
-   data:{
-    labels: allocationData.map(item => item.name),
-    datasets:[{
-    data: allocationData.map(item => item.value),
-
-    backgroundColor: allocationData.map(item => {
-
-        switch(item.name){
-
-            case "オルカン": return "#2ecc71";
-            case "S&P500": return "#e74c3c";
-            case "NASDAQ": return "#3498db";
-            case "BTC": return "#f39c12";
-            case "ゴールド": return "#f1c40f";
-            case "日本高配当": return "#9b59b6";
-            default: return "#95a5a6";
-
+    assetChart = new Chart(ctx,{
+        type: "pie",
+        data: {
+            labels: allocationData.map(item => item.name),
+            datasets: [
+                {
+                    data: allocationData.map(item => item.value),
+                   backgroundColor: allocationData.map(item => getChartColor(item.name))
+                }
+            ]
         }
+    });
 
-    })
-
-}]
-}
-});
 }
 
 window.simulate = function(){
@@ -724,17 +724,22 @@ window.simulate = function(){
     updateDashboard();
 
     document.getElementById("futureChartTitle").innerHTML =
-        targetAge + "歳時点の予想資産配分";
+    `${targetAge}歳時点の予想資産配分`;
 
-    document.getElementById("simResult").innerHTML =
-        "<b>【" + targetAge + "歳時点】</b><br><br>" +
-        "トクさん：" + formatMoney(tokTarget) + "<br>" +
-        "奥様：" + formatMoney(wifeTarget) + "<br>" +
-        "世帯合計：" + formatMoney(totalTarget) + "<br><br>" +
-        "<b>【元金・運用益】</b><br>" +
-        "元金：" + formatMoney(principalTarget) + "<br>" +
-        "運用益：" + formatMoney(profitTarget) + "<br>" +
-        "運用益率：" + (profitTarget / principalTarget * 100).toFixed(1) + "%";
+        const simResult = `
+        <b>【${targetAge}歳時点】</b><br><br>
+
+        トクさん：${formatMoney(tokTarget)}<br>
+        奥様：${formatMoney(wifeTarget)}<br>
+        世帯合計：${formatMoney(totalTarget)}<br><br>
+
+        <b>【元金・運用益】</b><br>
+        元金：${formatMoney(principalTarget)}<br>
+        運用益：${formatMoney(profitTarget)}<br>
+        運用益率：${(profitTarget / principalTarget * 100).toFixed(1)}%
+    `;
+
+    document.getElementById("simResult").innerHTML = simResult;
 
     const yearlyValues = [];
     const principalValues = [];
@@ -774,43 +779,43 @@ window.simulate = function(){
         principalValues
     );
 
-    const allTarget = futureValue(
-        v("t_all") + v("w_all") + v("w_r_old") + v("w_r_new"),
-        v("t_all_monthly") + v("w_all_monthly") + v("w_world_monthly"),
+        const allTarget = futureValue(
+        tAll + wAll + wROld + wRNew,
+        tAllMonthly + wAllMonthly + wWorldMonthly,
         rate,
         targetYears
     );
 
     const sp500Target = futureValue(
-        v("t_sp_old") + v("t_sp_new"),
+        tSpOld + tSpNew,
         0,
         rate,
         targetYears
     );
 
     const nasdaqTarget = futureValue(
-        v("t_nasdaq") + v("w_nasdaq"),
-        v("t_nasdaq_monthly") + v("w_nasdaq_monthly"),
+        tNasdaq + wNasdaq,
+        tNasdaqMonthly + wNasdaqMonthly,
         rate,
         targetYears
     );
 
     const goldTarget = futureValue(
-        v("t_gold") + v("w_gold"),
-        v("t_gold_monthly") + v("w_gold_monthly"),
+        tGold + wGold,
+        tGoldMonthly + wGoldMonthly,
         rate,
         targetYears
     );
 
     const dividendTarget = futureValue(
-        v("w_div"),
-        v("w_div_monthly"),
+        wDiv,
+        wDivMonthly,
         rate,
         targetYears
     );
 
     const otherTarget = futureValue(
-        v("t_other") + v("w_other"),
+        tOther + wOther,
         0,
         rate,
         targetYears
