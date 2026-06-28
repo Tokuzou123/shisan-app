@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>トク家 資産ダッシュボード</title>
+<title>本人家 資産ダッシュボード</title>
 
 <style>
 body{
@@ -105,8 +105,10 @@ button{
 
 <h2>積立入力</h2>
 
+<p style="color:#666;">※Version4で銘柄を自由に追加できるようになります。</p>
+
 <div class="section">
-<b>トクさん</b><br><br>
+<b><span id="monthlyUserTitle">本人</span></b><br><br>
 
 オルカン
 <input type="number" id="t_all_monthly" value="50000">
@@ -129,7 +131,7 @@ BTC
 </div>
 
 <div class="section">
-<b>奥様</b><br><br>
+<b><span id="monthlySpouseTitle">配偶者</span></b><br><br>
 
 オルカン
 <input type="number" id="w_all_monthly" value="40000">
@@ -167,8 +169,10 @@ NASDAQ
 
 <h2>保有資産入力</h2>
 
+<p style="color:#666;">※Version4で銘柄を自由に追加できるようになります。</p>
+
 <div class="section">
-<b>本人（SBI）</b><br><br>
+<b><span id="assetUserTitle">本人</span></b><br><br>
 
 オルカン
 <input type="number" id="t_all">
@@ -199,7 +203,7 @@ BTC現在価値
 </div>
 
 <div class="section">
-<b>配偶者（SBI）</b><br><br>
+<b><span id="assetSpouseRakutenTitle">配偶者</span> </b><br><br>
 
 オルカン
 <input type="number" id="w_all">
@@ -217,15 +221,7 @@ NASDAQ
 <input type="number" id="w_other">
 </div>
 
-<div class="section">
-<b>配偶者（楽天 NISA）</b><br><br>
 
-旧つみたてNISA オルカン
-<input type="number" id="w_r_old">
-
-新NISA オルカン
-<input type="number" id="w_r_new">
-</div>
 
 <button onclick="calc()">資産を計算</button>
 
@@ -396,7 +392,7 @@ updateMonthlyTotals();
 
 window.calc = function(){
 
-// トクさん
+// 本人
 let tok =
 v("t_all")
 + v("t_sp_old")
@@ -406,26 +402,24 @@ v("t_all")
 + v("t_other")
 + v("t_btc_value");
 
-
-// 奥様SBI
-let wife_sbi =
+// 配偶者
+let spouse =
 v("w_all") + v("w_nasdaq") + v("w_div") + v("w_gold") + v("w_other");
 
-// 奥様楽天
-let wife_rakuten =
-v("w_r_old") + v("w_r_new");
-
 // 合計
-let total = tok + wife_sbi + wife_rakuten;
+let total = tok + spouse;
 
 window.currentTotal = total;
 updateDashboard();
 
 // 表示
+const household = getHouseholdData();
+const userName = household.user.name;
+const spouseName = household.spouse.name;
+
 document.getElementById("result").innerHTML =
-"■ トクさん（SBI）： " + tok.toLocaleString() + "円<br>" +
-"■ 奥様（SBI）： " + wife_sbi.toLocaleString() + "円<br>" +
-"■ 奥様（楽天NISA）： " + wife_rakuten.toLocaleString() + "円<br><br>" +
+"■ " + userName + "： " + tok.toLocaleString() + "円<br>" +
+"■ " + spouseName + "： " + spouse.toLocaleString() + "円<br><br>" +
 "====================<br>" +
 "■ 世帯合計： " + total.toLocaleString() + "円";
 
@@ -468,9 +462,7 @@ function getHouseholdData(){
             v("w_nasdaq") +
             v("w_div") +
             v("w_gold") +
-            v("w_other") +
-            v("w_r_old") +
-            v("w_r_new"),
+            v("w_other"),
         monthly:
             v("w_all_monthly") +
             v("w_world_monthly") +
@@ -746,9 +738,7 @@ function drawChart(){
 
     const all =
         v("t_all") +
-        v("w_all") +
-        v("w_r_old") +
-        v("w_r_new");
+        v("w_all");
 
     const sp500 =
         v("t_sp_old") +
@@ -842,13 +832,11 @@ window.simulate = function(){
         v("t_other");
 
     const wife =
-        v("w_all") +
-        v("w_nasdaq") +
-        v("w_div") +
-        v("w_gold") +
-        v("w_other") +
-        v("w_r_old") +
-        v("w_r_new");
+    v("w_all") +
+    v("w_nasdaq") +
+    v("w_div") +
+    v("w_gold") +
+    v("w_other");
 
     const tokMonthly =
         v("t_all_monthly") +
@@ -995,7 +983,7 @@ window.simulate = function(){
     );
 
     const allTarget = futureValue(
-        v("t_all") + v("w_all") + v("w_r_old") + v("w_r_new"),
+        v("t_all") + v("w_all") ,
         v("t_all_monthly") + v("w_all_monthly") + v("w_world_monthly"),
         rate,
         targetYears
@@ -1276,6 +1264,31 @@ function setupAutoSimulation(){
 
 }
 
+function updateNameLabels(){
+
+    const household = getHouseholdData();
+    const userName = household.user.name;
+    const spouseName = household.spouse.name;
+
+    const labels = {
+    monthlyUserTitle: userName,
+    monthlySpouseTitle: spouseName,
+    assetUserTitle: userName,
+    assetSpouseTitle: spouseName
+};
+
+    Object.keys(labels).forEach(id => {
+
+        const element = document.getElementById(id);
+
+        if(element){
+            element.textContent = labels[id];
+        }
+
+    });
+
+}
+
 function updateDashboard(){
 
     const currentTotal = window.currentTotal || 0;
@@ -1313,6 +1326,7 @@ updateBTC();
 drawChart();
 updateAge();
 simulate();
+updateNameLabels();
 updateChildrenSettings();
 
 </script>
