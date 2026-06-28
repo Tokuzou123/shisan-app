@@ -172,18 +172,23 @@ NASDAQ
 </div>
 
 <div class="section">
+<b>👤 基本設定</b><br><br>
+
+本人名
+<input type="text" id="userName" value="トク">
+<br><br>
+
+配偶者名
+<input type="text" id="wifeName" value="奥様">
+<br><br>
+
 生年月日
 <input type="date" id="birthday">
 <div id="currentAge"></div>
 </div>
 
-<div class="section">
+<div class="section simulation-box">
 <b>📈 シミュレーション設定</b><br><br>
-
-生年月日
-<input type="date" id="birthday">
-<div id="currentAge"></div>
-<br>
 
 見たい年齢
 <select id="targetAge"></select>
@@ -351,6 +356,53 @@ document.getElementById("dashboard").innerHTML =
     formatMoney(total);
 
 drawChart();
+
+}
+
+function getHouseholdData(){
+
+    const userName = document.getElementById("userName").value || "本人";
+    const spouseName = document.getElementById("wifeName").value || "配偶者";
+
+    const user = {
+        name: userName,
+        assets:
+            v("t_all") +
+            v("t_sp_old") +
+            v("t_sp_new") +
+            v("t_nasdaq") +
+            v("t_gold") +
+            v("t_other"),
+        monthly:
+            v("t_all_monthly") +
+            v("t_nasdaq_monthly") +
+            v("t_gold_monthly"),
+        endAge: Number(document.getElementById("tokEndAge").value)
+    };
+
+    const spouse = {
+        name: spouseName,
+        assets:
+            v("w_all") +
+            v("w_nasdaq") +
+            v("w_div") +
+            v("w_gold") +
+            v("w_other") +
+            v("w_r_old") +
+            v("w_r_new"),
+        monthly:
+            v("w_all_monthly") +
+            v("w_world_monthly") +
+            v("w_nasdaq_monthly") +
+            v("w_div_monthly") +
+            v("w_gold_monthly"),
+        endAge: Number(document.getElementById("wifeEndAge").value)
+    };
+
+    return {
+        user,
+        spouse
+    };
 
 }
 
@@ -798,6 +850,11 @@ const principalTarget =
     window.profitTarget = profitTarget;
     window.targetAge = targetAge;
 
+   const household = getHouseholdData();
+
+   const userName = household.user.name;
+   const spouseName = household.spouse.name;
+
     updateDashboard();
 
     document.getElementById("futureChartTitle").innerHTML =
@@ -806,8 +863,8 @@ const principalTarget =
         const simResult = `
         <b>【${targetAge}歳時点】</b><br><br>
 
-        トクさん：${formatMoney(tokTarget)}<br>
-        奥様：${formatMoney(wifeTarget)}<br>
+        ${userName}：${formatMoney(tokTarget)}<br>
+        ${spouseName}：${formatMoney(wifeTarget)}<br>
         世帯合計：${formatMoney(totalTarget)}<br><br>
 
         <b>【元金・運用益】</b><br>
@@ -1100,6 +1157,31 @@ function setupRate(){
 
 }
 
+function setupAutoSimulation(){
+
+    const ids = [
+        "targetAge",
+        "rate",
+        "tokEndAge",
+        "wifeEndAge"
+    ];
+
+    ids.forEach(id => {
+
+        const element = document.getElementById(id);
+
+        if(!element){
+            return;
+        }
+
+        element.addEventListener("change", function(){
+            simulate();
+        });
+
+    });
+
+}
+
 function updateDashboard(){
 
     const currentTotal = window.currentTotal || 0;
@@ -1132,6 +1214,7 @@ console.log("Firebase準備OK");
 
 setupTargetAge();
 setupRate();
+setupAutoSimulation();
 updateBTC();
 drawChart();
 updateAge();

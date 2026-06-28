@@ -18,6 +18,14 @@ h2{
     border-radius:10px;
 }
 
+.simulation-box{
+    border:2px solid #4CAF50;
+    border-radius:12px;
+    padding:20px;
+    margin:20px 0;
+    background:#f8fff8;
+}
+
 input{
     width:100%;
     padding:8px;
