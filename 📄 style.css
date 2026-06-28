@@ -46,3 +46,27 @@ button{
     margin-top:20px;
     line-height:1.6;
 }
+
+.result{
+    font-size:22px;
+    font-weight:bold;
+    margin-top:20px;
+    line-height:1.6;
+}
+
+/* ←ここから追加 */
+
+.small-button{
+    width:auto;
+    padding:8px 16px;
+    font-size:14px;
+    margin-top:10px;
+    margin-right:10px;
+}
+
+.big-select{
+    width:100%;
+    padding:12px;
+    font-size:18px;
+    margin-top:5px;
+}

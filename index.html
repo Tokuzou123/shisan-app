@@ -53,63 +53,57 @@ button{
 </head>
 <body>
 
-<h1>トク家 資産ダッシュボード</h1>
+  <h1>資産ダッシュボード</h1>
 
-<div class="section" id="dashboard">
+<div class="section">
+
+<button class="small-button" onclick="saveData()">💾 保存</button>
+
+<button class="small-button" onclick="loadData()">📂 読込</button>
+
+</div>
+
+<h2>現在資産</h2>
+
+<div class="section">
+
+<div id="dashboard">
+
 未計算
+
 </div>
 
-<!-- トクさん -->
-<h2>トクさん（SBI）</h2>
+</div>
 
-<div class="section">オルカン <input type="number" id="t_all"></div>
-<div class="section">S&P500（旧NISA） <input type="number" id="t_sp_old"></div>
-<div class="section">S&P500（新NISA） <input type="number" id="t_sp_new"></div>
-<div class="section">NASDAQ <input type="number" id="t_nasdaq"></div>
-<div class="section">ゴールド <input type="number" id="t_gold"></div>
+<div class="result" id="result">未計算</div>  
 
-<div class="section">BTC保有数 <input type="number" step="0.00000001" id="t_btc_amount"></div>
+<h2>将来シミュレーション結果</h2>
 
-<div class="section">BTC現在価格 <input type="number" id="t_btc_price"></div>
+<div class="result" id="simResult">未計算</div>
+
+<h2>資産推移グラフ</h2>
 
 <div class="section">
-BTC現在価値
-<input type="number" id="t_btc_value" readonly>
+<canvas id="growthChart"></canvas>
 </div>
 
-<div class="section">その他 <input type="number" id="t_other"></div>
-
-<!-- 奥様SBI -->
-<h2>奥様（SBI）</h2>
-
-<div class="section">オルカン <input type="number" id="w_all"></div>
-<div class="section">NASDAQ <input type="number" id="w_nasdaq"></div>
-<div class="section">日本高配当 <input type="number" id="w_div"></div>
-<div class="section">ゴールド <input type="number" id="w_gold"></div>
-<div class="section">その他 <input type="number" id="w_other"></div>
-
-<!-- 奥様楽天 -->
-<h2>奥様（楽天 NISA）</h2>
-
-<div class="section">旧つみたてNISA オルカン <input type="number" id="w_r_old"></div>
-<div class="section">新NISA オルカン <input type="number" id="w_r_new"></div>
-
-<button onclick="calc()">資産を計算</button>
-
-<div class="result" id="result">未計算</div>
-
-<h2>設定</h2>
+<h2>現在資産配分</h2>
 
 <div class="section">
-表示単位
-<select id="displayUnit">
-<option value="yen">円</option>
-<option value="man" selected>万円</option>
-<option value="oku">億円</option>
-</select>
+<canvas id="assetChart"></canvas>
+
+<div id="allocationList" style="margin-top:20px;"></div>
 </div>
 
-<h2>将来シミュレーション</h2>
+<h2 id="futureChartTitle">将来資産配分</h2>
+
+<div class="section">
+<canvas id="futureChart"></canvas>
+
+<div id="futureAllocationList" style="margin-top:20px;"></div>
+</div>
+
+<h2>積立入力</h2>
 
 <div class="section">
 <b>トクさん</b><br><br>
@@ -171,17 +165,116 @@ NASDAQ
 <div id="monthlyBreakdown"></div>
 </div>
 
+<h2>保有資産入力</h2>
+
+<div class="section">
+<b>本人（SBI）</b><br><br>
+
+オルカン
+<input type="number" id="t_all">
+
+S&P500（旧NISA）
+<input type="number" id="t_sp_old">
+
+S&P500（新NISA）
+<input type="number" id="t_sp_new">
+
+NASDAQ
+<input type="number" id="t_nasdaq">
+
+ゴールド
+<input type="number" id="t_gold">
+
+BTC保有数
+<input type="number" step="0.00000001" id="t_btc_amount">
+
+BTC現在価格
+<input type="number" id="t_btc_price">
+
+BTC現在価値
+<input type="number" id="t_btc_value" readonly>
+
+その他
+<input type="number" id="t_other">
+</div>
+
+<div class="section">
+<b>配偶者（SBI）</b><br><br>
+
+オルカン
+<input type="number" id="w_all">
+
+NASDAQ
+<input type="number" id="w_nasdaq">
+
+日本高配当
+<input type="number" id="w_div">
+
+ゴールド
+<input type="number" id="w_gold">
+
+その他
+<input type="number" id="w_other">
+</div>
+
+<div class="section">
+<b>配偶者（楽天 NISA）</b><br><br>
+
+旧つみたてNISA オルカン
+<input type="number" id="w_r_old">
+
+新NISA オルカン
+<input type="number" id="w_r_new">
+</div>
+
+<button onclick="calc()">資産を計算</button>
+
+<h2>シミュレーション設定</h2>
+
+<div class="section simulation-box">
+
+表示単位
+<select id="displayUnit">
+<option value="yen">円</option>
+<option value="man" selected>万円</option>
+<option value="oku">億円</option>
+</select>
+
+<br><br>
+
+見たい年齢
+<select id="targetAge"></select>
+
+<br><br>
+
+年利
+<select id="rate"></select>
+
+<br><br>
+
+本人積立終了年齢
+<select id="tokEndAge"></select>
+
+<br><br>
+
+配偶者積立終了年齢
+<select id="wifeEndAge"></select>
+
+</div>
+
+<h2>基本設定</h2>
+
 <div class="section">
 <b>👤 基本設定</b><br><br>
 
 <b>【家族】</b><br><br>
 
 本人名
-<input type="text" id="userName" value="トク">
+<input type="text" id="userName" value="本人">
 <br><br>
 
 配偶者名
-<input type="text" id="wifeName" value="奥様">
+<input type="text" id="wifeName" value="配偶者">
 <br><br>
 
 子供人数
@@ -206,53 +299,9 @@ NASDAQ
 
 <div id="currentAge"></div>
 
-<div class="section simulation-box">
-<b>📈 シミュレーション設定</b><br><br>
-
-見たい年齢
-<select id="targetAge"></select>
-<br><br>
-
-年利
-<select id="rate"></select>
-<br><br>
-
-トク積立終了年齢
-<select id="tokEndAge"></select>
-<br><br>
-
-妻積立終了年齢
-<select id="wifeEndAge"></select>
-<br><br>
-
-<button onclick="simulate()">シミュレーション実行</button>
-
-<button onclick="saveData()">保存</button>
-<button onclick="loadData()">読込</button>
-</div>
-<div class="result" id="simResult">未計算</div>
-
-<h2>資産推移グラフ</h2>
-
-<div class="section">
-<canvas id="growthChart"></canvas>
 </div>
 
-<h2>世帯資産配分</h2>
 
-<div class="section">
-<canvas id="assetChart"></canvas>
-
-<div id="allocationList" style="margin-top:20px;"></div>
-</div>
-
-<h2 id="futureChartTitle">65歳予想資産配分</h2>
-
-<div class="section">
-    <canvas id="futureChart"></canvas>
-
-    <div id="futureAllocationList" style="margin-top:20px;"></div>
-</div>
 
 <script type="module">
 
@@ -276,7 +325,15 @@ const db = getFirestore(app);
 console.log("Firebase接続成功");
 
 function v(id){
-    return Number(document.getElementById(id).value || 0);
+
+    const element = document.getElementById(id);
+
+    if(!element){
+        return 0;
+    }
+
+    return Number(element.value || 0);
+
 }
 
 function formatMoney(value){
@@ -303,11 +360,16 @@ function formatMoney(value){
 
 function updateBTC(){
 
+    const valueElement = document.getElementById("t_btc_value");
+
+    if(!valueElement){
+        return;
+    }
+
     const amount = v("t_btc_amount");
     const price = v("t_btc_price");
 
-    document.getElementById("t_btc_value").value =
-        Math.round(amount * price);
+    valueElement.value = Math.round(amount * price);
 
 }
 

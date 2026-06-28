@@ -172,37 +172,63 @@ NASDAQ
 </div>
 
 <div class="section">
+<b>👤 基本設定</b><br><br>
+
+<b>【家族】</b><br><br>
+
+本人名
+<input type="text" id="userName" value="トク">
+<br><br>
+
+配偶者名
+<input type="text" id="wifeName" value="奥様">
+<br><br>
+
+子供人数
+<select id="childrenCount">
+    <option value="0">0人</option>
+    <option value="1">1人</option>
+    <option value="2" selected>2人</option>
+    <option value="3">3人</option>
+    <option value="4">4人</option>
+</select>
+
+<br><br>
+
+<div id="childrenSettings"></div>
+
+<br>
+
+<b>【プロフィール】</b><br><br>
+
 生年月日
 <input type="date" id="birthday">
-<div id="currentAge"></div>
-</div>
 
-<div class="section">
+<div id="currentAge"></div>
+
+<div class="section simulation-box">
+<b>📈 シミュレーション設定</b><br><br>
+
 見たい年齢
 <select id="targetAge"></select>
-</div>
+<br><br>
 
-<div class="section">
+年利
+<select id="rate"></select>
+<br><br>
+
 トク積立終了年齢
 <select id="tokEndAge"></select>
-</div>
+<br><br>
 
-<div class="section">
 妻積立終了年齢
 <select id="wifeEndAge"></select>
+<br><br>
+
+
+<button class="small-button" onclick="saveData()">保存</button>
+<button class="small-button" onclick="loadData()">読込</button>
 </div>
-
-<div class="section">
-
-<select id="rate"></select>
-
-</div>
-
-<button onclick="simulate()">シミュレーション実行</button>
-
-<button onclick="saveData()">保存</button>
-<button onclick="loadData()">読込</button>
-
 <div class="result" id="simResult">未計算</div>
 
 <h2>資産推移グラフ</h2>
@@ -351,6 +377,53 @@ drawChart();
 
 }
 
+function getHouseholdData(){
+
+    const userName = document.getElementById("userName").value || "本人";
+    const spouseName = document.getElementById("wifeName").value || "配偶者";
+
+    const user = {
+        name: userName,
+        assets:
+            v("t_all") +
+            v("t_sp_old") +
+            v("t_sp_new") +
+            v("t_nasdaq") +
+            v("t_gold") +
+            v("t_other"),
+        monthly:
+            v("t_all_monthly") +
+            v("t_nasdaq_monthly") +
+            v("t_gold_monthly"),
+        endAge: Number(document.getElementById("tokEndAge").value)
+    };
+
+    const spouse = {
+        name: spouseName,
+        assets:
+            v("w_all") +
+            v("w_nasdaq") +
+            v("w_div") +
+            v("w_gold") +
+            v("w_other") +
+            v("w_r_old") +
+            v("w_r_new"),
+        monthly:
+            v("w_all_monthly") +
+            v("w_world_monthly") +
+            v("w_nasdaq_monthly") +
+            v("w_div_monthly") +
+            v("w_gold_monthly"),
+        endAge: Number(document.getElementById("wifeEndAge").value)
+    };
+
+    return {
+        user,
+        spouse
+    };
+
+}
+
 function futureValue(current, monthly, annualRate, years){
 
     let value = current;
@@ -386,49 +459,54 @@ function futureValueWithEndAge(current, monthly, annualRate, currentAge, targetA
 
 function updateMonthlyTotals(){
 
-    let tokMonthly =
-    v("t_all_monthly")
-    + v("t_nasdaq_monthly")
-    + v("t_gold_monthly")
-+ v("t_btc_monthly");
+    const household = getHouseholdData();
 
-    let wifeMonthly =
-    v("w_all_monthly")
-    + v("w_world_monthly")
-    + v("w_nasdaq_monthly")
-    + v("w_div_monthly")
-    + v("w_gold_monthly");
+    const userName = household.user.name;
+    const spouseName = household.spouse.name;
 
-    let familyMonthly = tokMonthly + wifeMonthly;
+    const userMonthly =
+        v("t_all_monthly") +
+        v("t_nasdaq_monthly") +
+        v("t_gold_monthly") +
+        v("t_btc_monthly");
+
+    const spouseMonthly =
+        v("w_all_monthly") +
+        v("w_world_monthly") +
+        v("w_nasdaq_monthly") +
+        v("w_div_monthly") +
+        v("w_gold_monthly");
+
+    const familyMonthly = userMonthly + spouseMonthly;
 
     document.getElementById("tok_total_monthly").innerHTML =
-    "積立合計：" + tokMonthly.toLocaleString() + "円/月";
+        "積立合計：" + userMonthly.toLocaleString() + "円/月";
 
     document.getElementById("wife_total_monthly").innerHTML =
-    "積立合計：" + wifeMonthly.toLocaleString() + "円/月";
+        "積立合計：" + spouseMonthly.toLocaleString() + "円/月";
 
     document.getElementById("family_total_monthly").innerHTML =
-    familyMonthly.toLocaleString() + "円/月";
+        familyMonthly.toLocaleString() + "円/月";
 
     document.getElementById("monthlyBreakdown").innerHTML =
 
-    "<b>【トクさん】</b><br>" +
-    "オルカン：" + v("t_all_monthly").toLocaleString() + "円<br>" +
-    "NASDAQ：" + v("t_nasdaq_monthly").toLocaleString() + "円<br>" +
-    "ゴールド：" + v("t_gold_monthly").toLocaleString() + "円<br>" +
-    "BTC：" + v("t_btc_monthly").toLocaleString() + "円<br>" +
-    "合計：" + tokMonthly.toLocaleString() + "円/月<br><br>" +
+        "<b>【" + userName + "】</b><br>" +
+        "オルカン：" + v("t_all_monthly").toLocaleString() + "円<br>" +
+        "NASDAQ：" + v("t_nasdaq_monthly").toLocaleString() + "円<br>" +
+        "ゴールド：" + v("t_gold_monthly").toLocaleString() + "円<br>" +
+        "BTC：" + v("t_btc_monthly").toLocaleString() + "円<br>" +
+        "合計：" + userMonthly.toLocaleString() + "円/月<br><br>" +
 
-    "<b>【奥様】</b><br>" +
-    "オルカン：" + v("w_all_monthly").toLocaleString() + "円<br>" +
-    "SBIオルカン：" + v("w_world_monthly").toLocaleString() + "円<br>" +
-    "NASDAQ：" + v("w_nasdaq_monthly").toLocaleString() + "円<br>" +
-    "日本高配当：" + v("w_div_monthly").toLocaleString() + "円<br>" +
-    "ゴールド：" + v("w_gold_monthly").toLocaleString() + "円<br>" +
-    "合計：" + wifeMonthly.toLocaleString() + "円/月<br><br>" +
+        "<b>【" + spouseName + "】</b><br>" +
+        "オルカン：" + v("w_all_monthly").toLocaleString() + "円<br>" +
+        "SBIオルカン：" + v("w_world_monthly").toLocaleString() + "円<br>" +
+        "NASDAQ：" + v("w_nasdaq_monthly").toLocaleString() + "円<br>" +
+        "日本高配当：" + v("w_div_monthly").toLocaleString() + "円<br>" +
+        "ゴールド：" + v("w_gold_monthly").toLocaleString() + "円<br>" +
+        "合計：" + spouseMonthly.toLocaleString() + "円/月<br><br>" +
 
-    "<b>【世帯合計】</b><br>" +
-    familyMonthly.toLocaleString() + "円/月";
+        "<b>【世帯合計】</b><br>" +
+        familyMonthly.toLocaleString() + "円/月";
 }
 
 let assetChart;
@@ -679,113 +757,91 @@ window.simulate = function(){
 
     updateAge();
 
+    const household = getHouseholdData();
+    const userName = household.user.name;
+    const spouseName = household.spouse.name;
+
     const yearsTo55 = window.yearsTo55;
     const targetAge = Number(document.getElementById("targetAge").value);
     const currentAge = 55 - yearsTo55;
     const targetYears = Math.max(0, targetAge - currentAge);
     const rate = Number(document.getElementById("rate").value);
 
-       const btcFixed = v("t_btc_value");
+    const btcFixed = v("t_btc_value");
     const btcMonthly = v("t_btc_monthly");
 
-    const tAll = v("t_all");
-    const tSpOld = v("t_sp_old");
-    const tSpNew = v("t_sp_new");
-    const tNasdaq = v("t_nasdaq");
-    const tGold = v("t_gold");
-    const tOther = v("t_other");
+    const tok =
+        v("t_all") +
+        v("t_sp_old") +
+        v("t_sp_new") +
+        v("t_nasdaq") +
+        v("t_gold") +
+        v("t_other");
 
-    const wAll = v("w_all");
-    const wNasdaq = v("w_nasdaq");
-    const wDiv = v("w_div");
-    const wGold = v("w_gold");
-    const wOther = v("w_other");
-    const wROld = v("w_r_old");
-    const wRNew = v("w_r_new");
+    const wife =
+        v("w_all") +
+        v("w_nasdaq") +
+        v("w_div") +
+        v("w_gold") +
+        v("w_other") +
+        v("w_r_old") +
+        v("w_r_new");
 
-    const tAllMonthly = v("t_all_monthly");
-    const tNasdaqMonthly = v("t_nasdaq_monthly");
-    const tGoldMonthly = v("t_gold_monthly");
+    const tokMonthly =
+        v("t_all_monthly") +
+        v("t_nasdaq_monthly") +
+        v("t_gold_monthly");
 
-    const wAllMonthly = v("w_all_monthly");
-    const wWorldMonthly = v("w_world_monthly");
-    const wNasdaqMonthly = v("w_nasdaq_monthly");
-    const wDivMonthly = v("w_div_monthly");
-    const wGoldMonthly = v("w_gold_monthly");
+    const wifeMonthly =
+        v("w_all_monthly") +
+        v("w_world_monthly") +
+        v("w_nasdaq_monthly") +
+        v("w_div_monthly") +
+        v("w_gold_monthly");
+
+    const tokEndAge = Number(document.getElementById("tokEndAge").value);
+    const wifeEndAge = Number(document.getElementById("wifeEndAge").value);
 
     const btcTarget =
         btcFixed +
         btcMonthly * 12 * targetYears;
 
-    const tok =
-        tAll +
-        tSpOld +
-        tSpNew +
-        tNasdaq +
-        tGold +
-        tOther;
+    const tokTarget =
+        futureValueWithEndAge(
+            tok,
+            tokMonthly,
+            rate,
+            currentAge,
+            targetAge,
+            tokEndAge
+        ) + btcTarget;
 
-    const wife =
-        wAll +
-        wNasdaq +
-        wDiv +
-        wGold +
-        wOther +
-        wROld +
-        wRNew;
-
-    const tokMonthly =
-        tAllMonthly +
-        tNasdaqMonthly +
-        tGoldMonthly;
-
-    const wifeMonthly =
-        wAllMonthly +
-        wWorldMonthly +
-        wNasdaqMonthly +
-        wDivMonthly +
-        wGoldMonthly;
-
-    const tokEndAge = Number(document.getElementById("tokEndAge").value);
-
-const tokTarget =
-    futureValueWithEndAge(
-        tok,
-        tokMonthly,
-        rate,
-        currentAge,
-        targetAge,
-        tokEndAge
-    ) + btcTarget;
-
-   const wifeEndAge = Number(document.getElementById("wifeEndAge").value);
-
-const wifeTarget =
-    futureValueWithEndAge(
-        wife,
-        wifeMonthly,
-        rate,
-        currentAge,
-        targetAge,
-        wifeEndAge
-    );
+    const wifeTarget =
+        futureValueWithEndAge(
+            wife,
+            wifeMonthly,
+            rate,
+            currentAge,
+            targetAge,
+            wifeEndAge
+        );
 
     const totalTarget =
         tokTarget + wifeTarget;
 
     const tokMonths =
-    Math.max(0, Math.round((Math.min(targetAge, tokEndAge) - currentAge) * 12));
+        Math.max(0, Math.round((Math.min(targetAge, tokEndAge) - currentAge) * 12));
 
-const wifeMonths =
-    Math.max(0, Math.round((Math.min(targetAge, wifeEndAge) - currentAge) * 12));
+    const wifeMonths =
+        Math.max(0, Math.round((Math.min(targetAge, wifeEndAge) - currentAge) * 12));
 
-const principalTarget =
-    tok +
-    wife +
-    btcFixed +
-    tokMonthly * tokMonths +
-    wifeMonthly * wifeMonths +
-    btcMonthly * Math.max(0, Math.round((targetAge - currentAge) * 12));
+    const principalTarget =
+        tok +
+        wife +
+        btcFixed +
+        tokMonthly * tokMonths +
+        wifeMonthly * wifeMonths +
+        btcMonthly * Math.max(0, Math.round((targetAge - currentAge) * 12));
 
     const profitTarget =
         totalTarget - principalTarget;
@@ -798,13 +854,13 @@ const principalTarget =
     updateDashboard();
 
     document.getElementById("futureChartTitle").innerHTML =
-    `${targetAge}歳時点の予想資産配分`;
+        `${targetAge}歳時点の予想資産配分`;
 
-        const simResult = `
+    const simResult = `
         <b>【${targetAge}歳時点】</b><br><br>
 
-        トクさん：${formatMoney(tokTarget)}<br>
-        奥様：${formatMoney(wifeTarget)}<br>
+        ${userName}：${formatMoney(tokTarget)}<br>
+        ${spouseName}：${formatMoney(wifeTarget)}<br>
         世帯合計：${formatMoney(totalTarget)}<br><br>
 
         <b>【元金・運用益】</b><br>
@@ -823,49 +879,49 @@ const principalTarget =
 
     for(let age = Math.ceil(currentAge + 1); age <= targetAge; age++){
 
-    const y = age - currentAge;
+        const y = age - currentAge;
 
-    const btcYear =
-        btcFixed +
-        btcMonthly * 12 * y;
+        const btcYear =
+            btcFixed +
+            btcMonthly * 12 * y;
 
-    const tokYear =
-        futureValueWithEndAge(
-            tok,
-            tokMonthly,
-            rate,
-            currentAge,
-            age,
-            tokEndAge
-        ) + btcYear;
+        const tokYear =
+            futureValueWithEndAge(
+                tok,
+                tokMonthly,
+                rate,
+                currentAge,
+                age,
+                tokEndAge
+            ) + btcYear;
 
-    const wifeYear =
-        futureValueWithEndAge(
-            wife,
-            wifeMonthly,
-            rate,
-            currentAge,
-            age,
-            wifeEndAge
-        );
+        const wifeYear =
+            futureValueWithEndAge(
+                wife,
+                wifeMonthly,
+                rate,
+                currentAge,
+                age,
+                wifeEndAge
+            );
 
-    const tokMonthsYear =
-        Math.max(0, Math.round((Math.min(age, tokEndAge) - currentAge) * 12));
+        const tokMonthsYear =
+            Math.max(0, Math.round((Math.min(age, tokEndAge) - currentAge) * 12));
 
-    const wifeMonthsYear =
-        Math.max(0, Math.round((Math.min(age, wifeEndAge) - currentAge) * 12));
+        const wifeMonthsYear =
+            Math.max(0, Math.round((Math.min(age, wifeEndAge) - currentAge) * 12));
 
-    const principalYear =
-        tok +
-        wife +
-        btcFixed +
-        tokMonthly * tokMonthsYear +
-        wifeMonthly * wifeMonthsYear +
-        btcMonthly * 12 * y;
+        const principalYear =
+            tok +
+            wife +
+            btcFixed +
+            tokMonthly * tokMonthsYear +
+            wifeMonthly * wifeMonthsYear +
+            btcMonthly * 12 * y;
 
-    yearlyValues.push(tokYear + wifeYear);
-    principalValues.push(principalYear);
-}
+        yearlyValues.push(tokYear + wifeYear);
+        principalValues.push(principalYear);
+    }
 
     drawGrowthChart(
         tok + wife + btcFixed,
@@ -875,43 +931,43 @@ const principalTarget =
         principalValues
     );
 
-        const allTarget = futureValue(
-        tAll + wAll + wROld + wRNew,
-        tAllMonthly + wAllMonthly + wWorldMonthly,
+    const allTarget = futureValue(
+        v("t_all") + v("w_all") + v("w_r_old") + v("w_r_new"),
+        v("t_all_monthly") + v("w_all_monthly") + v("w_world_monthly"),
         rate,
         targetYears
     );
 
     const sp500Target = futureValue(
-        tSpOld + tSpNew,
+        v("t_sp_old") + v("t_sp_new"),
         0,
         rate,
         targetYears
     );
 
     const nasdaqTarget = futureValue(
-        tNasdaq + wNasdaq,
-        tNasdaqMonthly + wNasdaqMonthly,
+        v("t_nasdaq") + v("w_nasdaq"),
+        v("t_nasdaq_monthly") + v("w_nasdaq_monthly"),
         rate,
         targetYears
     );
 
     const goldTarget = futureValue(
-        tGold + wGold,
-        tGoldMonthly + wGoldMonthly,
+        v("t_gold") + v("w_gold"),
+        v("t_gold_monthly") + v("w_gold_monthly"),
         rate,
         targetYears
     );
 
     const dividendTarget = futureValue(
-        wDiv,
-        wDivMonthly,
+        v("w_div"),
+        v("w_div_monthly"),
         rate,
         targetYears
     );
 
     const otherTarget = futureValue(
-        tOther + wOther,
+        v("t_other") + v("w_other"),
         0,
         rate,
         targetYears
@@ -926,6 +982,7 @@ const principalTarget =
         otherTarget,
         btcTarget
     );
+
 }
 
 window.saveData = async function(){
@@ -1074,6 +1131,33 @@ function setupAgeSelect(id, defaultAge){
 
 }
 
+function updateChildrenSettings(){
+
+    const count = Number(document.getElementById("childrenCount").value);
+    const area = document.getElementById("childrenSettings");
+
+    area.innerHTML = "";
+
+    for(let i = 1; i <= count; i++){
+
+        area.innerHTML += `
+            <b>子供${i}</b><br>
+
+            名前
+            <input type="text" id="child${i}Name">
+
+            <br><br>
+
+            生年月日
+            <input type="date" id="child${i}Birthday">
+
+            <br><br>
+        `;
+
+    }
+
+}
+
 function setupRate(){
 
     const select = document.getElementById("rate");
@@ -1094,6 +1178,38 @@ function setupRate(){
 
         select.appendChild(option);
     }
+
+}
+
+function setupAutoSimulation(){
+
+    const ids = [
+        "targetAge",
+        "rate",
+        "tokEndAge",
+        "wifeEndAge",
+        "childrenCount"
+    ];
+
+    ids.forEach(id => {
+
+        const element = document.getElementById(id);
+
+        if(!element){
+            return;
+        }
+
+        element.addEventListener("change", function(){
+
+            if(id === "childrenCount"){
+                updateChildrenSettings();
+            }
+
+            simulate();
+
+        });
+
+    });
 
 }
 
@@ -1129,10 +1245,12 @@ console.log("Firebase準備OK");
 
 setupTargetAge();
 setupRate();
+setupAutoSimulation();
 updateBTC();
 drawChart();
 updateAge();
 simulate();
+updateChildrenSettings();
 
 </script>
 
