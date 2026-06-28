@@ -441,49 +441,54 @@ function futureValueWithEndAge(current, monthly, annualRate, currentAge, targetA
 
 function updateMonthlyTotals(){
 
-    let tokMonthly =
-    v("t_all_monthly")
-    + v("t_nasdaq_monthly")
-    + v("t_gold_monthly")
-+ v("t_btc_monthly");
+    const household = getHouseholdData();
 
-    let wifeMonthly =
-    v("w_all_monthly")
-    + v("w_world_monthly")
-    + v("w_nasdaq_monthly")
-    + v("w_div_monthly")
-    + v("w_gold_monthly");
+    const userName = household.user.name;
+    const spouseName = household.spouse.name;
 
-    let familyMonthly = tokMonthly + wifeMonthly;
+    const userMonthly =
+        v("t_all_monthly") +
+        v("t_nasdaq_monthly") +
+        v("t_gold_monthly") +
+        v("t_btc_monthly");
+
+    const spouseMonthly =
+        v("w_all_monthly") +
+        v("w_world_monthly") +
+        v("w_nasdaq_monthly") +
+        v("w_div_monthly") +
+        v("w_gold_monthly");
+
+    const familyMonthly = userMonthly + spouseMonthly;
 
     document.getElementById("tok_total_monthly").innerHTML =
-    "積立合計：" + tokMonthly.toLocaleString() + "円/月";
+        "積立合計：" + userMonthly.toLocaleString() + "円/月";
 
     document.getElementById("wife_total_monthly").innerHTML =
-    "積立合計：" + wifeMonthly.toLocaleString() + "円/月";
+        "積立合計：" + spouseMonthly.toLocaleString() + "円/月";
 
     document.getElementById("family_total_monthly").innerHTML =
-    familyMonthly.toLocaleString() + "円/月";
+        familyMonthly.toLocaleString() + "円/月";
 
     document.getElementById("monthlyBreakdown").innerHTML =
 
-    "<b>【トクさん】</b><br>" +
-    "オルカン：" + v("t_all_monthly").toLocaleString() + "円<br>" +
-    "NASDAQ：" + v("t_nasdaq_monthly").toLocaleString() + "円<br>" +
-    "ゴールド：" + v("t_gold_monthly").toLocaleString() + "円<br>" +
-    "BTC：" + v("t_btc_monthly").toLocaleString() + "円<br>" +
-    "合計：" + tokMonthly.toLocaleString() + "円/月<br><br>" +
+        "<b>【" + userName + "】</b><br>" +
+        "オルカン：" + v("t_all_monthly").toLocaleString() + "円<br>" +
+        "NASDAQ：" + v("t_nasdaq_monthly").toLocaleString() + "円<br>" +
+        "ゴールド：" + v("t_gold_monthly").toLocaleString() + "円<br>" +
+        "BTC：" + v("t_btc_monthly").toLocaleString() + "円<br>" +
+        "合計：" + userMonthly.toLocaleString() + "円/月<br><br>" +
 
-    "<b>【奥様】</b><br>" +
-    "オルカン：" + v("w_all_monthly").toLocaleString() + "円<br>" +
-    "SBIオルカン：" + v("w_world_monthly").toLocaleString() + "円<br>" +
-    "NASDAQ：" + v("w_nasdaq_monthly").toLocaleString() + "円<br>" +
-    "日本高配当：" + v("w_div_monthly").toLocaleString() + "円<br>" +
-    "ゴールド：" + v("w_gold_monthly").toLocaleString() + "円<br>" +
-    "合計：" + wifeMonthly.toLocaleString() + "円/月<br><br>" +
+        "<b>【" + spouseName + "】</b><br>" +
+        "オルカン：" + v("w_all_monthly").toLocaleString() + "円<br>" +
+        "SBIオルカン：" + v("w_world_monthly").toLocaleString() + "円<br>" +
+        "NASDAQ：" + v("w_nasdaq_monthly").toLocaleString() + "円<br>" +
+        "日本高配当：" + v("w_div_monthly").toLocaleString() + "円<br>" +
+        "ゴールド：" + v("w_gold_monthly").toLocaleString() + "円<br>" +
+        "合計：" + spouseMonthly.toLocaleString() + "円/月<br><br>" +
 
-    "<b>【世帯合計】</b><br>" +
-    familyMonthly.toLocaleString() + "円/月";
+        "<b>【世帯合計】</b><br>" +
+        familyMonthly.toLocaleString() + "円/月";
 }
 
 let assetChart;
