@@ -178,31 +178,34 @@ NASDAQ
 </div>
 
 <div class="section">
+<b>📈 シミュレーション設定</b><br><br>
+
+生年月日
+<input type="date" id="birthday">
+<div id="currentAge"></div>
+<br>
+
 見たい年齢
 <select id="targetAge"></select>
-</div>
+<br><br>
 
-<div class="section">
+年利
+<select id="rate"></select>
+<br><br>
+
 トク積立終了年齢
 <select id="tokEndAge"></select>
-</div>
+<br><br>
 
-<div class="section">
 妻積立終了年齢
 <select id="wifeEndAge"></select>
-</div>
-
-<div class="section">
-
-<select id="rate"></select>
-
-</div>
+<br><br>
 
 <button onclick="simulate()">シミュレーション実行</button>
 
 <button onclick="saveData()">保存</button>
 <button onclick="loadData()">読込</button>
-
+</div>
 <div class="result" id="simResult">未計算</div>
 
 <h2>資産推移グラフ</h2>

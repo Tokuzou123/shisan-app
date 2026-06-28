@@ -176,9 +176,20 @@ NASDAQ
 <input type="date" id="birthday">
 <div id="currentAge"></div>
 </div>
+
 <div class="section">
 見たい年齢
 <select id="targetAge"></select>
+</div>
+
+<div class="section">
+トク積立終了年齢
+<select id="tokEndAge"></select>
+</div>
+
+<div class="section">
+妻積立終了年齢
+<select id="wifeEndAge"></select>
 </div>
 
 <div class="section">
@@ -350,6 +361,27 @@ function futureValue(current, monthly, annualRate, years){
     }
 
     return Math.round(value);
+}
+
+function futureValueWithEndAge(current, monthly, annualRate, currentAge, targetAge, endAge){
+
+    let value = current;
+
+    const totalMonths = Math.max(0, Math.round((targetAge - currentAge) * 12));
+    const endMonths = Math.max(0, Math.round((endAge - currentAge) * 12));
+
+    for(let i = 0; i < totalMonths; i++){
+
+        value = value * (1 + annualRate / 12);
+
+        if(i < endMonths){
+            value += monthly;
+        }
+
+    }
+
+    return Math.round(value);
+
 }
 
 function updateMonthlyTotals(){
@@ -714,20 +746,46 @@ window.simulate = function(){
         wDivMonthly +
         wGoldMonthly;
 
-    const tokTarget =
-        futureValue(tok, tokMonthly, rate, targetYears) + btcTarget;
+    const tokEndAge = Number(document.getElementById("tokEndAge").value);
 
-    const wifeTarget =
-        futureValue(wife, wifeMonthly, rate, targetYears);
+const tokTarget =
+    futureValueWithEndAge(
+        tok,
+        tokMonthly,
+        rate,
+        currentAge,
+        targetAge,
+        tokEndAge
+    ) + btcTarget;
+
+   const wifeEndAge = Number(document.getElementById("wifeEndAge").value);
+
+const wifeTarget =
+    futureValueWithEndAge(
+        wife,
+        wifeMonthly,
+        rate,
+        currentAge,
+        targetAge,
+        wifeEndAge
+    );
 
     const totalTarget =
         tokTarget + wifeTarget;
 
-    const principalTarget =
-        tok +
-        wife +
-        btcFixed +
-        (tokMonthly + wifeMonthly + btcMonthly) * 12 * targetYears;
+    const tokMonths =
+    Math.max(0, Math.round((Math.min(targetAge, tokEndAge) - currentAge) * 12));
+
+const wifeMonths =
+    Math.max(0, Math.round((Math.min(targetAge, wifeEndAge) - currentAge) * 12));
+
+const principalTarget =
+    tok +
+    wife +
+    btcFixed +
+    tokMonthly * tokMonths +
+    wifeMonthly * wifeMonths +
+    btcMonthly * Math.max(0, Math.round((targetAge - currentAge) * 12));
 
     const profitTarget =
         totalTarget - principalTarget;
@@ -765,27 +823,49 @@ window.simulate = function(){
 
     for(let age = Math.ceil(currentAge + 1); age <= targetAge; age++){
 
-        const y = age - currentAge;
+    const y = age - currentAge;
 
-        const btcYear =
-            btcFixed +
-            btcMonthly * 12 * y;
+    const btcYear =
+        btcFixed +
+        btcMonthly * 12 * y;
 
-        const tokYear =
-            futureValue(tok, tokMonthly, rate, y) + btcYear;
+    const tokYear =
+        futureValueWithEndAge(
+            tok,
+            tokMonthly,
+            rate,
+            currentAge,
+            age,
+            tokEndAge
+        ) + btcYear;
 
-        const wifeYear =
-            futureValue(wife, wifeMonthly, rate, y);
+    const wifeYear =
+        futureValueWithEndAge(
+            wife,
+            wifeMonthly,
+            rate,
+            currentAge,
+            age,
+            wifeEndAge
+        );
 
-        const principalYear =
-            tok +
-            wife +
-            btcFixed +
-            (tokMonthly + wifeMonthly + btcMonthly) * 12 * y;
+    const tokMonthsYear =
+        Math.max(0, Math.round((Math.min(age, tokEndAge) - currentAge) * 12));
 
-        yearlyValues.push(tokYear + wifeYear);
-        principalValues.push(principalYear);
-    }
+    const wifeMonthsYear =
+        Math.max(0, Math.round((Math.min(age, wifeEndAge) - currentAge) * 12));
+
+    const principalYear =
+        tok +
+        wife +
+        btcFixed +
+        tokMonthly * tokMonthsYear +
+        wifeMonthly * wifeMonthsYear +
+        btcMonthly * 12 * y;
+
+    yearlyValues.push(tokYear + wifeYear);
+    principalValues.push(principalYear);
+}
 
     drawGrowthChart(
         tok + wife + btcFixed,
@@ -965,7 +1045,15 @@ function updateAge(){
 
 function setupTargetAge(){
 
-    const select = document.getElementById("targetAge");
+    setupAgeSelect("targetAge", 65);
+    setupAgeSelect("tokEndAge", 65);
+    setupAgeSelect("wifeEndAge", 60);
+
+}
+
+function setupAgeSelect(id, defaultAge){
+
+    const select = document.getElementById(id);
 
     if(!select){
         return;
@@ -979,7 +1067,7 @@ function setupTargetAge(){
 
         option.value = age;
         option.textContent = age + "歳";
-        option.selected = (age === 65);
+        option.selected = (age === defaultAge);
 
         select.appendChild(option);
     }
