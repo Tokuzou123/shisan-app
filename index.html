@@ -174,6 +174,8 @@ NASDAQ
 <div class="section">
 <b>👤 基本設定</b><br><br>
 
+<b>【家族】</b><br><br>
+
 本人名
 <input type="text" id="userName" value="トク">
 <br><br>
@@ -182,10 +184,27 @@ NASDAQ
 <input type="text" id="wifeName" value="奥様">
 <br><br>
 
+子供人数
+<select id="childrenCount">
+    <option value="0">0人</option>
+    <option value="1">1人</option>
+    <option value="2" selected>2人</option>
+    <option value="3">3人</option>
+    <option value="4">4人</option>
+</select>
+
+<br><br>
+
+<div id="childrenSettings"></div>
+
+<br>
+
+<b>【プロフィール】</b><br><br>
+
 生年月日
 <input type="date" id="birthday">
+
 <div id="currentAge"></div>
-</div>
 
 <div class="section simulation-box">
 <b>📈 シミュレーション設定</b><br><br>
@@ -1113,6 +1132,33 @@ function setupAgeSelect(id, defaultAge){
 
 }
 
+function updateChildrenSettings(){
+
+    const count = Number(document.getElementById("childrenCount").value);
+    const area = document.getElementById("childrenSettings");
+
+    area.innerHTML = "";
+
+    for(let i = 1; i <= count; i++){
+
+        area.innerHTML += `
+            <b>子供${i}</b><br>
+
+            名前
+            <input type="text" id="child${i}Name">
+
+            <br><br>
+
+            生年月日
+            <input type="date" id="child${i}Birthday">
+
+            <br><br>
+        `;
+
+    }
+
+}
+
 function setupRate(){
 
     const select = document.getElementById("rate");
@@ -1142,7 +1188,8 @@ function setupAutoSimulation(){
         "targetAge",
         "rate",
         "tokEndAge",
-        "wifeEndAge"
+        "wifeEndAge",
+        "childrenCount"
     ];
 
     ids.forEach(id => {
@@ -1154,7 +1201,13 @@ function setupAutoSimulation(){
         }
 
         element.addEventListener("change", function(){
+
+            if(id === "childrenCount"){
+                updateChildrenSettings();
+            }
+
             simulate();
+
         });
 
     });
@@ -1198,6 +1251,7 @@ updateBTC();
 drawChart();
 updateAge();
 simulate();
+updateChildrenSettings();
 
 </script>
 
